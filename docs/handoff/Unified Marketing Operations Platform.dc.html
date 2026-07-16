@@ -1,0 +1,1834 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:#f5f5f7;color:#0f1b34;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:#1f5fd0;text-decoration:none}
+  a:hover{color:#1749a8}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:#d3dbe6;border-radius:5px}
+  ::-webkit-scrollbar-track{background:transparent}
+  select option{background:#ffffff;color:#0f1b34}
+  textarea{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif}
+  @keyframes shim{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  @keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+  @keyframes toastin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+</style>
+</helmet>
+<div style="height:100vh;display:flex;flex-direction:column;overflow:hidden;background:#f5f5f7">
+
+  <!-- ============ COMMAND BAR ============ -->
+  <header style="height:54px;flex:none;display:flex;align-items:center;gap:16px;padding:0 18px;background:#ffffff;border-bottom:1px solid #e5e5ea">
+    <div style="display:flex;align-items:center;gap:11px">
+      <div style="width:26px;height:26px;border-radius:6px;background:{{navy}};display:flex;align-items:center;justify-content:center;font:800 13px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#fff">U</div>
+      <div style="line-height:1.05">
+        <div style="font:800 13.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#0d2149">URBAN DISTRICT</div>
+        <div style="font:500 10px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#8a97ad;letter-spacing:0;white-space:nowrap">Marketing operations</div>
+      </div>
+    </div>
+
+    <div style="flex:1"></div>
+
+    <div style="display:flex;background:#f0f0f3;border:1px solid #e5e5ea;border-radius:7px;padding:2px">
+      <sc-for list="{{ ranges }}" as="r" hint-placeholder-count="7">
+        <button onClick="{{ r.onClick }}" style="{{ r.style }}">{{ r.label }}</button>
+      </sc-for>
+    </div>
+
+    <button onClick="{{ toggleCompare }}" style="{{ compareStyle }}" style-hover="border-color:#c2cbd9">
+      <span style="width:6px;height:6px;border-radius:50%;background:{{ compareDot }}"></span> Compare {{ compareWord }}
+    </button>
+
+    <div style="display:flex;background:#f0f0f3;border:1px solid #e5e5ea;border-radius:7px;padding:2px">
+      <button onClick="{{ setCAD }}" style="{{ cadStyle }}">CAD</button>
+      <button onClick="{{ setUSD }}" style="{{ usdStyle }}">USD</button>
+    </div>
+
+    <button onClick="{{ openConnect }}" style="{{ connPillStyle }}" style-hover="filter:brightness(.99)">
+      <span style="width:7px;height:7px;border-radius:50%;background:{{ connDot }};animation:pulse 1.8s ease-in-out infinite"></span>
+      <span style="font:600 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:{{ connTextColor }}">{{ connText }}</span>
+    </button>
+  </header>
+
+  <!-- ============ META STRIP ============ -->
+  <div style="height:31px;flex:none;display:flex;align-items:center;gap:20px;padding:0 18px;background:#ffffff;border-bottom:1px solid #f0f0f3;font:500 10.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#8a97ad">
+    <span>Period&nbsp; <b style="color:#41506b;font-weight:600">{{ rangeLabel }}</b></span>
+    <sc-if value="{{ isCustomRange }}" hint-placeholder-val="{{ false }}">
+      <span style="display:flex;align-items:center;gap:5px">
+        <input type="date" value="{{ customFrom }}" onInput="{{ setCustomFrom }}" style="{{ dateInputStyle }}">
+        <span>→</span>
+        <input type="date" value="{{ customTo }}" onInput="{{ setCustomTo }}" style="{{ dateInputStyle }}">
+      </span>
+    </sc-if>
+    <span>Compare&nbsp; <b style="color:#41506b;font-weight:600">{{ compareMeta }}</b></span>
+    <span>Currency&nbsp; <b style="color:#41506b;font-weight:600">{{ currency }}</b></span>
+    <span>Timezone&nbsp; <b style="color:#41506b;font-weight:600">{{ timezone }}</b></span>
+    <span>Last sync&nbsp; <b style="color:{{ metaSyncColor }};font-weight:600">{{ lastSyncText }}</b></span>
+    <div style="flex:1"></div>
+    <span style="display:flex;align-items:center;gap:6px">Data confidence
+      <b style="color:#fff;background:{{ confidenceColor }};padding:2px 7px;border-radius:4px;font-weight:600">{{ confidenceLabel }}</b>
+    </span>
+  </div>
+
+  <!-- ============ BODY ============ -->
+  <div style="flex:1;display:flex;min-height:0">
+
+    <!-- SIDEBAR -->
+    <nav style="width:230px;flex:none;background:#ffffff;border-right:1px solid #e5e5ea;overflow-y:auto;padding:8px 0 24px">
+      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="15">
+        <sc-if value="{{ n.showHeader }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:15px 18px 6px;font:500 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#aab4c6">{{ n.group }}</div>
+        </sc-if>
+        <button onClick="{{ n.onClick }}" style="{{ n.style }}" style-hover="background:#f5f5f7">
+          <span style="width:6px;height:6px;border-radius:2px;background:{{ n.dot }};flex:none"></span>
+          {{ n.label }}
+        </button>
+      </sc-for>
+      <div onClick="{{ openConnect }}" style="margin:22px 14px 0;padding:13px;background:#f5f8fd;border:1px solid #e2e9f4;border-radius:8px;cursor:pointer" style-hover="border-color:#c9d7ec">
+        <div style="font:500 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#8a97ad;margin-bottom:8px">Setup · {{ setupCount }} / 6 sources</div>
+        <div style="height:5px;border-radius:3px;background:#e2e9f4;overflow:hidden"><div style="width:{{ setupPct }};height:100%;background:{{accent}};transition:width .3s"></div></div>
+        <div style="margin-top:9px;font:500 10.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85">Connect a source to begin ingesting data.</div>
+      </div>
+    </nav>
+
+    <!-- MAIN -->
+    <main style="flex:1;overflow-y:auto;padding:30px 38px 76px;min-width:0">
+
+      <!-- ==================== EXECUTIVE ==================== -->
+      <sc-if value="{{ isExec }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:18px">
+          <div>
+            <h1 style="margin:0;font:600 22px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:-.021em;color:#0d2149">Executive command center</h1>
+            <p style="margin:6px 0 0;font:400 12.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85;max-width:640px">Company economics first. Figures populate from the warehouse after the first Supermetrics + Shopify sync. Platform-attributed and Shopify-verified numbers are always shown separately.</p>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button onClick="{{ exportPdf }}" style="{{ ghostBtn }}" style-hover="border-color:#c2cbd9">Export PDF</button>
+            <button onClick="{{ openConnect }}" style="{{ primaryBtn }}" style-hover="filter:brightness(1.06)">Connect Supermetrics</button>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(198px,1fr));gap:11px">
+          <sc-for list="{{ execKpis }}" as="k" hint-placeholder-count="18">
+            <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:14px 15px;display:flex;flex-direction:column;gap:11px;min-height:106px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+                <span style="font:600 10px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#7a88a0;line-height:1.25">{{ k.label }}</span>
+                <span title="{{ k.def }}" style="width:14px;height:14px;flex:none;border:1px solid #d4dce8;border-radius:50%;font:500 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#9aa6bd;display:flex;align-items:center;justify-content:center;cursor:help">i</span>
+              </div>
+              <div style="font:600 25px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#c2cbd9;letter-spacing:-.01em">—</div>
+              <div style="height:20px;border-radius:4px;background:linear-gradient(90deg,#eef2f7,#f5f5f7,#eef2f7);background-size:200% 100%;animation:shim 1.8s linear infinite"></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
+                <span style="font:500 10px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#8a97ad">Target {{ k.target }}</span>
+                <span style="{{ awaitBadge }}">{{ awaitLabel }}</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:12px;margin-top:12px">
+          <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <span style="font:600 12.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149">Gross profit vs. ad spend · daily</span>
+              <span style="font:500 10px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#8a97ad">Shopify-verified</span>
+            </div>
+            <div style="{{ chartFrame }}">
+              <div style="{{ chartOverlay }}">
+                <div style="width:11px;height:11px;transform:rotate(45deg);border:1.5px solid #c2cbd9;margin-bottom:9px"></div>
+                <div style="font:600 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85">No data yet</div>
+                <div style="font:400 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#8a97ad;margin-top:3px">Series render after the first sync.</div>
+              </div>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:16px">
+            <div style="font:600 12.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;margin-bottom:12px;color:#0d2149">Attribution reconciliation</div>
+            <sc-for list="{{ reconRows }}" as="r" hint-placeholder-count="5">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f0f3">
+                <span style="font:500 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#41506b">{{ r }}</span>
+                <span style="font:600 13px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#c2cbd9">—</span>
+              </div>
+            </sc-for>
+            <div style="margin-top:11px;font:400 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#8a97ad">Shopify is the accounting source of truth. Platform-attributed revenue is never combined with it unlabeled.</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ==================== MARKETING ==================== -->
+      <sc-if value="{{ isMarketing }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-bottom:16px">
+          <h1 style="margin:0;font:600 22px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:-.021em;color:#0d2149">Marketing performance</h1>
+          <p style="margin:6px 0 0;font:400 12.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85">Drill from channel to creative. Gross-profit ROAS is the primary decision metric — high revenue ROAS can still lose money when product margins vary.</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;font:600 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif">
+          <sc-for list="{{ crumbs }}" as="c" hint-placeholder-count="6">
+            <button onClick="{{ c.onClick }}" style="{{ c.style }}">{{ c.label }}</button>
+            <span style="color:#c2cbd9" data-sep="1">›</span>
+          </sc-for>
+        </div>
+        <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;overflow:hidden">
+          <div style="display:grid;grid-template-columns:1.8fr repeat(9,1fr);gap:0;background:#f5f5f7;border-bottom:1px solid #e5e5ea">
+            <sc-for list="{{ mktCols }}" as="c" hint-placeholder-count="10">
+              <div style="{{ c.style }}">{{ c.label }}</div>
+            </sc-for>
+          </div>
+          <div style="position:relative;padding:0">
+            <sc-for list="{{ skelRows }}" as="s" hint-placeholder-count="7">
+              <div style="display:grid;grid-template-columns:1.8fr repeat(9,1fr);gap:0;border-bottom:1px solid #f2f2f5;opacity:{{ s }}">
+                <div style="padding:11px 14px"><div style="height:9px;width:70%;border-radius:3px;background:linear-gradient(90deg,#eef2f7,#f5f5f7,#eef2f7);background-size:200% 100%;animation:shim 1.8s linear infinite"></div></div>
+                <sc-for list="{{ nine }}" as="n" hint-placeholder-count="9">
+                  <div style="padding:11px 14px"><div style="height:9px;border-radius:3px;background:linear-gradient(90deg,#eef2f7,#f5f5f7,#eef2f7);background-size:200% 100%;animation:shim 1.8s linear infinite"></div></div>
+                </sc-for>
+              </div>
+            </sc-for>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(247,249,252,.72);backdrop-filter:blur(1px)">
+              <div style="font:600 13px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149">No {{ drillNoun }} ingested</div>
+              <div style="font:400 11.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85;margin:5px 0 13px">Connect Google Ads &amp; Meta via Supermetrics to populate this table.</div>
+              <button onClick="{{ openConnect }}" style="{{ primaryBtn }}" style-hover="filter:brightness(1.06)">Open data-source manager</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ==================== FUNNEL ==================== -->
+      <sc-if value="{{ isFunnel }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-bottom:16px">
+          <h1 style="margin:0;font:600 22px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:-.021em;color:#0d2149">Website funnel</h1>
+          <p style="margin:6px 0 0;font:400 12.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85">Ad click → session → product view → sample request → cart → checkout → purchase → repeat. Each stage shows conversion, drop-off, revenue and gross profit once connected.</p>
+        </div>
+        <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:20px 22px">
+          <sc-for list="{{ funnelStages }}" as="f" hint-placeholder-count="8">
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:9px">
+              <div style="width:150px;flex:none;font:500 12.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#41506b">{{ f.label }}</div>
+              <div style="flex:1;height:34px;background:#f5f5f7;border:1px solid #f0f0f3;border-radius:6px;position:relative;overflow:hidden">
+                <div style="height:100%;width:{{ f.w }};background:linear-gradient(90deg,#eef2f7,#f5f5f7,#eef2f7);background-size:200% 100%;animation:shim 1.8s linear infinite"></div>
+              </div>
+              <div style="width:80px;flex:none;text-align:right;font:600 13px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#c2cbd9">—</div>
+              <div style="width:70px;flex:none;text-align:right;font:500 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#8a97ad">{{ f.drop }}</div>
+            </div>
+          </sc-for>
+          <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;font:500 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#aab4c6;letter-spacing:0">
+            <span style="width:150px"></span><span style="flex:1"></span><span style="width:80px;text-align:right">Users</span><span style="width:70px;text-align:right">Drop-off</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
+          <span style="font:500 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#aab4c6">Break down by</span>
+          <sc-for list="{{ funnelBreak }}" as="b" hint-placeholder-count="5">
+            <button onClick="{{ b.onClick }}" style="{{ b.style }}">{{ b.label }}</button>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <!-- ==================== COHORTS ==================== -->
+      <sc-if value="{{ isCohorts }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-bottom:16px">
+          <h1 style="margin:0;font:600 22px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:-.021em;color:#0d2149">Customer cohort analysis</h1>
+          <p style="margin:6px 0 0;font:400 12.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85">Cumulative gross-profit retention by acquisition cohort. Requires matched Shopify customers and COGS.</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <span style="font:500 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#aab4c6">Cohort by</span>
+          <sc-for list="{{ cohortDims }}" as="d" hint-placeholder-count="6">
+            <button onClick="{{ d.onClick }}" style="{{ d.style }}">{{ d.label }}</button>
+          </sc-for>
+        </div>
+        <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;overflow:hidden">
+          <div style="display:grid;grid-template-columns:1.4fr repeat(9,1fr);background:#f5f5f7;border-bottom:1px solid #e5e5ea">
+            <sc-for list="{{ cohortCols }}" as="c" hint-placeholder-count="10">
+              <div style="{{ c.style }}">{{ c.label }}</div>
+            </sc-for>
+          </div>
+          <div style="position:relative">
+            <sc-for list="{{ skelRows }}" as="s" hint-placeholder-count="7">
+              <div style="display:grid;grid-template-columns:1.4fr repeat(9,1fr);border-bottom:1px solid #f2f2f5;opacity:{{ s }}">
+                <div style="padding:11px 14px"><div style="height:9px;width:60%;border-radius:3px;background:linear-gradient(90deg,#eef2f7,#f5f5f7,#eef2f7);background-size:200% 100%;animation:shim 1.8s linear infinite"></div></div>
+                <sc-for list="{{ nine }}" as="n" hint-placeholder-count="9">
+                  <div style="padding:11px 14px"><div style="height:9px;border-radius:3px;background:linear-gradient(90deg,#eef2f7,#f5f5f7,#eef2f7);background-size:200% 100%;animation:shim 1.8s linear infinite"></div></div>
+                </sc-for>
+              </div>
+            </sc-for>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(247,249,252,.72)">
+              <div style="font:600 13px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149">No cohorts available</div>
+              <div style="font:400 11.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85;margin-top:4px">Predictive CLTV stays off until repeat-purchase history exists.</div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ==================== CUSTOMER TYPES / SEGMENTS ==================== -->
+      <sc-if value="{{ isSegments }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px">
+          <div>
+            <h1 style="margin:0;font:600 22px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:-.021em;color:#0d2149">Customer types</h1>
+            <p style="margin:6px 0 0;font:400 12.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85;max-width:660px">Trade vs. consumer economics. Types are assigned via mapping rules and the customer-type survey question, then flow through every report as a segment filter.</p>
+          </div>
+          <button onClick="{{ openTypeModal }}" style="{{ primaryBtn }}" style-hover="filter:brightness(1.06)">+ New customer type</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+          <span style="font:500 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#aab4c6">Assigned by</span>
+          <sc-for list="{{ typeRules }}" as="t" hint-placeholder-count="4">
+            <span style="display:flex;align-items:center;gap:6px;padding:5px 11px;border:1px solid #e5e5ea;border-radius:20px;background:#fff;font:600 10.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85"><span style="width:6px;height:6px;border-radius:50%;background:{{ t.dot }}"></span>{{ t.label }}</span>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(238px,1fr));gap:11px">
+          <sc-for list="{{ segments }}" as="s" hint-placeholder-count="10">
+            <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:15px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="width:9px;height:9px;border-radius:3px;background:{{ s.dot }}"></span>
+                  <span style="font:600 12.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149">{{ s.label }}</span>
+                </div>
+                <span style="font:500 10px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:{{ s.kindColor }};background:{{ s.kindBg }};padding:3px 6px;border-radius:4px">{{ s.kind }}</span>
+              </div>
+              <sc-for list="{{ segMetrics }}" as="m" hint-placeholder-count="5">
+                <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f2f2f5">
+                  <span style="font:500 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85">{{ m }}</span>
+                  <span style="font:600 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#c2cbd9">—</span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <!-- ==================== SAMPLE PROGRAM ==================== -->
+      <sc-if value="{{ isSample }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-bottom:16px">
+          <h1 style="margin:0;font:600 22px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:-.021em;color:#0d2149">Sample program</h1>
+          <p style="margin:6px 0 0;font:400 12.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85">Samples are the core acquisition motion. Tracks sample-to-order conversion, program cost and sample-to-customer CAC.</p>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(204px,1fr));gap:11px;margin-bottom:12px">
+          <sc-for list="{{ sampleKpis }}" as="k" hint-placeholder-count="8">
+            <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:14px 15px">
+              <div style="font:600 10px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#7a88a0;margin-bottom:10px">{{ k }}</div>
+              <div style="font:600 23px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#c2cbd9">—</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:18px 22px">
+          <div style="font:600 12.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;margin-bottom:14px;color:#0d2149">Sample request → order journey</div>
+          <div style="display:flex;align-items:stretch;gap:8px">
+            <sc-for list="{{ sampleFlow }}" as="f" hint-placeholder-count="4">
+              <div style="flex:1;background:#f5f5f7;border:1px solid #f0f0f3;border-radius:8px;padding:15px 12px;text-align:center">
+                <div style="font:600 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#41506b">{{ f }}</div>
+                <div style="font:600 20px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#c2cbd9;margin-top:8px">—</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ==================== PRODUCT PROFITABILITY ==================== -->
+      <sc-if value="{{ isProduct }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-bottom:16px">
+          <h1 style="margin:0;font:600 22px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:-.021em;color:#0d2149">Product profitability</h1>
+          <p style="margin:6px 0 0;font:400 12.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85">Revenue is never mistaken for margin. Rows without COGS are flagged and excluded from trusted gross-margin reporting.</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <span style="font:500 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#aab4c6">Group by</span>
+          <sc-for list="{{ productDims }}" as="d" hint-placeholder-count="6">
+            <button onClick="{{ d.onClick }}" style="{{ d.style }}">{{ d.label }}</button>
+          </sc-for>
+        </div>
+        <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;overflow:hidden">
+          <div style="display:grid;grid-template-columns:1.8fr repeat(9,1fr);background:#f5f5f7;border-bottom:1px solid #e5e5ea">
+            <sc-for list="{{ productCols }}" as="c" hint-placeholder-count="10">
+              <div style="{{ c.style }}">{{ c.label }}</div>
+            </sc-for>
+          </div>
+          <div style="position:relative">
+            <sc-for list="{{ skelRows }}" as="s" hint-placeholder-count="7">
+              <div style="display:grid;grid-template-columns:1.8fr repeat(9,1fr);border-bottom:1px solid #f2f2f5;opacity:{{ s }}">
+                <div style="padding:11px 14px"><div style="height:9px;width:75%;border-radius:3px;background:linear-gradient(90deg,#eef2f7,#f5f5f7,#eef2f7);background-size:200% 100%;animation:shim 1.8s linear infinite"></div></div>
+                <sc-for list="{{ nine }}" as="n" hint-placeholder-count="9">
+                  <div style="padding:11px 14px"><div style="height:9px;border-radius:3px;background:linear-gradient(90deg,#eef2f7,#f5f5f7,#eef2f7);background-size:200% 100%;animation:shim 1.8s linear infinite"></div></div>
+                </sc-for>
+              </div>
+            </sc-for>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(247,249,252,.72)">
+              <div style="font:600 13px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149">No products ingested</div>
+              <div style="font:400 11.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85;margin-top:4px">Connect Shopify products &amp; upload COGS to compute gross profit.</div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ==================== EXPERIMENTS ==================== -->
+      <sc-if value="{{ isExperiments }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px">
+          <div>
+            <h1 style="margin:0;font:600 22px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:-.021em;color:#0d2149">Experiments</h1>
+            <p style="margin:6px 0 0;font:400 12.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85;max-width:640px">Ad &amp; website tests with hypothesis, guardrails and an approval workflow. No winner is declared without sufficient evidence; no live change ships without approval.</p>
+          </div>
+          <button onClick="{{ openExpModal }}" style="{{ primaryBtn }}" style-hover="filter:brightness(1.06)">+ New experiment</button>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+          <sc-for list="{{ expStatuses }}" as="e" hint-placeholder-count="9">
+            <button onClick="{{ e.onClick }}" style="{{ e.style }}">
+              <span style="width:6px;height:6px;border-radius:50%;background:{{ e.dot }}"></span>{{ e.label }} · {{ e.count }}
+            </button>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ hasExperiments }}" hint-placeholder-val="{{ false }}">
+          <sc-for list="{{ expCards }}" as="x" hint-placeholder-count="2">
+            <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:16px 18px;margin-bottom:10px">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+                <div style="min-width:0">
+                  <div style="display:flex;align-items:center;gap:9px">
+                    <span style="width:7px;height:7px;border-radius:50%;background:{{ x.dot }}"></span>
+                    <span style="font:600 13.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149">{{ x.name }}</span>
+                    <span style="font:500 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#41506b;background:#f0f3f9;border:1px solid #e5e5ea;padding:3px 7px;border-radius:4px">{{ x.status }}</span>
+                    <span style="font:500 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#8a97ad">{{ x.type }}</span>
+                  </div>
+                  <div style="margin-top:7px;font:400 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85;max-width:620px">{{ x.hypothesis }}</div>
+                  <div style="margin-top:9px;display:flex;gap:16px;font:500 10.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#8a97ad;flex-wrap:wrap">
+                    <span>Primary&nbsp;<b style="color:#41506b">{{ x.metric }}</b></span>
+                    <span>Guardrail&nbsp;<b style="color:#41506b">{{ x.guardrail }}</b></span>
+                    <span>MDE&nbsp;<b style="color:#41506b">{{ x.mde }}%</b></span>
+                    <span>Traffic&nbsp;<b style="color:#41506b">{{ x.traffic }}%</b></span>
+                    <span>Result&nbsp;<b style="color:#c1841a">Awaiting connected sources</b></span>
+                  </div>
+                </div>
+                <div style="display:flex;gap:7px;flex:none">
+                  <sc-if value="{{ x.canAdvance }}" hint-placeholder-val="{{ true }}">
+                    <button onClick="{{ x.advance }}" style="{{ ghostBtnSm }}" style-hover="border-color:#c2cbd9">{{ x.advanceLabel }}</button>
+                  </sc-if>
+                  <sc-if value="{{ x.canPause }}" hint-placeholder-val="{{ false }}">
+                    <button onClick="{{ x.pause }}" style="{{ ghostBtnSm }}" style-hover="border-color:#c2cbd9">Pause</button>
+                  </sc-if>
+                  <button onClick="{{ x.remove }}" style="{{ dangerBtnSm }}" style-hover="filter:brightness(.98)">Delete</button>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </sc-if>
+
+        <sc-if value="{{ noExperiments }}" hint-placeholder-val="{{ true }}">
+          <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:56px 20px;display:flex;flex-direction:column;align-items:center;text-align:center">
+            <div style="width:34px;height:34px;border:1.5px solid #d4dce8;border-radius:18px;display:flex;align-items:center;justify-content:center;margin-bottom:14px"><span style="width:11px;height:11px;transform:rotate(45deg);border:1.5px solid #aab4c6"></span></div>
+            <div style="font:600 14px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149">{{ expEmptyTitle }}</div>
+            <div style="font:400 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85;margin:6px 0 16px;max-width:420px">Draft a hypothesis, set the primary metric and guardrails, and route it for approval before launch.</div>
+            <button onClick="{{ openExpModal }}" style="{{ primaryBtn }}" style-hover="filter:brightness(1.06)">Draft first experiment</button>
+          </div>
+        </sc-if>
+      </sc-if>
+
+      <!-- ==================== LANDING PAGE A/B ==================== -->
+      <sc-if value="{{ isLanding }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px">
+          <div>
+            <h1 style="margin:0;font:600 22px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:-.021em;color:#0d2149">Landing page A/B tests</h1>
+            <p style="margin:6px 0 0;font:400 12.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85;max-width:720px">Point Claude at a live store page as your control, describe the change to test, and it generates variant B. Publish the winner straight to a Shopify draft theme.</p>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;margin-bottom:16px">
+          <div>
+            <div style="{{ cfgLabel }}">Control page (Shopify)</div>
+            <select value="{{ landingSource }}" onChange="{{ setLandingSource }}" style="{{ cfgInput }};min-width:280px">
+              <sc-for list="{{ storePages }}" as="p" hint-placeholder-count="5"><option value="{{ p }}">{{ p }}</option></sc-for>
+            </select>
+          </div>
+          <div>
+            <div style="{{ cfgLabel }}">Test type</div>
+            <div style="display:flex;gap:6px">
+              <sc-for list="{{ landingTypes }}" as="t" hint-placeholder-count="3">
+                <button onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="flex:1"></div>
+          <div style="font:400 10.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#aab4c6;max-width:220px;text-align:right">Connect Shopify to load live theme pages. Sample paths shown.</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <!-- CONTROL A -->
+          <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;overflow:hidden">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 15px;border-bottom:1px solid #f0f0f3">
+              <div style="display:flex;align-items:center;gap:9px">
+                <span style="font:600 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#fff;background:#0d2149;padding:3px 9px;border-radius:5px;letter-spacing:0">Control · A</span>
+                <span style="font:600 11.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149">Live page — as published</span>
+              </div>
+              <span style="font:500 10px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#8a97ad">{{ landingSource }}</span>
+            </div>
+            <div style="{{ browserFrame }}">
+              <div style="{{ browserBar }}">
+                <span style="width:9px;height:9px;border-radius:50%;background:#e5e5ea"></span>
+                <span style="width:9px;height:9px;border-radius:50%;background:#e5e5ea"></span>
+                <span style="width:9px;height:9px;border-radius:50%;background:#e5e5ea"></span>
+                <span style="flex:1;margin-left:8px;height:18px;border-radius:5px;background:#f2f5fa;display:flex;align-items:center;padding:0 9px;font:500 9.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#8a97ad">urbandistrict.com{{ landingSource }}</span>
+              </div>
+              <div style="{{ pagePlaceholder }}">
+                <div style="font:600 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#8a97ad;letter-spacing:0">live page render</div>
+                <div style="font:400 10.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#aab4c6;margin-top:4px">Mirrored from your Shopify theme</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- VARIANT B -->
+          <div style="background:#fff;border:1px solid {{ variantBorder }};border-radius:18px;overflow:hidden">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 15px;border-bottom:1px solid #f0f0f3">
+              <div style="display:flex;align-items:center;gap:9px">
+                <span style="font:600 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#fff;background:{{accent}};padding:3px 9px;border-radius:5px;letter-spacing:0">Variant · B</span>
+                <span style="font:600 11.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149">{{ variantHeading }}</span>
+              </div>
+              <sc-if value="{{ hasVariant }}" hint-placeholder-val="{{ false }}">
+                <span style="font:500 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:{{accent}};background:{{ accentTint }};padding:3px 7px;border-radius:4px;letter-spacing:0">Generated · Claude</span>
+              </sc-if>
+            </div>
+            <sc-if value="{{ hasVariant }}" hint-placeholder-val="{{ false }}">
+              <div style="{{ browserFrame }}">
+                <div style="{{ browserBar }}">
+                  <span style="width:9px;height:9px;border-radius:50%;background:#e5e5ea"></span>
+                  <span style="width:9px;height:9px;border-radius:50%;background:#e5e5ea"></span>
+                  <span style="width:9px;height:9px;border-radius:50%;background:#e5e5ea"></span>
+                  <span style="flex:1;margin-left:8px;height:18px;border-radius:5px;background:#eef4fd;display:flex;align-items:center;padding:0 9px;font:500 9.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:{{accent}}">preview · variant B</span>
+                </div>
+                <div style="{{ pagePlaceholderB }}">
+                  <div style="font:600 11.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149;max-width:80%;text-align:center">{{ variantSummary }}</div>
+                  <div style="font:400 10.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#8a97ad;margin-top:6px">{{ landingTypeLabel }} · generated variant render</div>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ noVariant }}" hint-placeholder-val="{{ true }}">
+              <div style="padding:16px 15px">
+                <div style="{{ cfgLabel }}">Describe the change to test</div>
+                <textarea value="{{ landingPrompt }}" onInput="{{ setLandingPrompt }}" placeholder="e.g. Move the sample-request CTA above the fold, add a trade-pricing badge, and shorten the hero copy." style="{{ promptArea }};min-height:96px"></textarea>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 12px">
+                  <sc-for list="{{ landingIdeas }}" as="i" hint-placeholder-count="3">
+                    <button onClick="{{ i.onClick }}" style="{{ chip }}" style-hover="border-color:{{accent}};color:{{accent}}">{{ i.label }}</button>
+                  </sc-for>
+                </div>
+                <button onClick="{{ generateVariant }}" style="{{ primaryBtn }};width:100%" style-hover="filter:brightness(1.06)">Generate variant B with Claude</button>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+
+        <!-- test config + publish -->
+        <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:14px;margin-top:14px">
+          <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:16px 18px">
+            <div style="font:600 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149;margin-bottom:14px">Test configuration</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+              <div>
+                <div style="{{ cfgLabel }}">Traffic split (A / B)</div>
+                <div style="display:flex;gap:6px">
+                  <sc-for list="{{ splitOptions }}" as="s" hint-placeholder-count="3">
+                    <button onClick="{{ s.onClick }}" style="{{ s.style }}">{{ s.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+              <div>
+                <div style="{{ cfgLabel }}">Primary metric</div>
+                <select value="{{ landingMetric }}" onChange="{{ setLandingMetric }}" style="{{ cfgInput }}">
+                  <sc-for list="{{ landingMetricOptions }}" as="o" hint-placeholder-count="4"><option value="{{ o }}">{{ o }}</option></sc-for>
+                </select>
+              </div>
+              <div>
+                <div style="{{ cfgLabel }}">Guardrail</div>
+                <select value="{{ landingGuardrail }}" onChange="{{ setLandingGuardrail }}" style="{{ cfgInput }}">
+                  <sc-for list="{{ guardrailOptions }}" as="o" hint-placeholder-count="8"><option value="{{ o }}">{{ o }}</option></sc-for>
+                </select>
+              </div>
+              <div>
+                <div style="{{ cfgLabel }}">Min. runtime</div>
+                <select value="{{ landingRuntime }}" onChange="{{ setLandingRuntime }}" style="{{ cfgInput }}">
+                  <sc-for list="{{ runtimeOptions }}" as="o" hint-placeholder-count="4"><option value="{{ o }}">{{ o }}</option></sc-for>
+                </select>
+              </div>
+            </div>
+            <sc-if value="{{ hasVariant }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ regenVariant }}" style="{{ ghostBtnSm }};margin-top:14px" style-hover="border-color:#c2cbd9">Regenerate variant</button>
+            </sc-if>
+          </div>
+          <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:16px 18px;display:flex;flex-direction:column">
+            <div style="font:600 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149;margin-bottom:6px">Publish to Shopify</div>
+            <div style="font:400 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#8a97ad;margin-bottom:14px">Variant B is pushed as a Shopify draft theme with a URL split — no live traffic moves until you launch the test.</div>
+            <div style="display:flex;align-items:center;gap:9px;padding:11px 13px;background:#f5f5f7;border:1px solid #f0f0f3;border-radius:8px;margin-bottom:14px">
+              <span style="width:8px;height:8px;border-radius:50%;background:{{ publishDot }}"></span>
+              <span style="font:600 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:{{ publishColor }}">{{ publishStatus }}</span>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:auto">
+              <button onClick="{{ publishLanding }}" style="{{ primaryBtn }};flex:1;{{ publishDisabled }}" style-hover="filter:brightness(1.06)">Publish variant to Shopify</button>
+              <button onClick="{{ launchLanding }}" style="{{ ghostBtn }}" style-hover="border-color:#c2cbd9">Launch test</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- per-variant results -->
+        <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;overflow:hidden;margin-top:14px">
+          <div style="display:grid;grid-template-columns:1fr repeat(5,1fr);background:#f5f5f7;border-bottom:1px solid #e5e5ea">
+            <div style="{{ thL }}">Variant</div><div style="{{ thR }}">Sessions</div><div style="{{ thR }}">Conv %</div><div style="{{ thR }}">Revenue</div><div style="{{ thR }}">Gross profit</div><div style="{{ thR }}">Uplift</div>
+          </div>
+          <sc-for list="{{ landingResultRows }}" as="r" hint-placeholder-count="2">
+            <div style="display:grid;grid-template-columns:1fr repeat(5,1fr);border-bottom:1px solid #f2f2f5;align-items:center">
+              <div style="padding:12px 14px;display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:{{ r.dot }}"></span><span style="font:600 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149">{{ r.label }}</span></div>
+              <div style="padding:12px 14px;text-align:right;font:600 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#c2cbd9">—</div>
+              <div style="padding:12px 14px;text-align:right;font:600 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#c2cbd9">—</div>
+              <div style="padding:12px 14px;text-align:right;font:600 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#c2cbd9">—</div>
+              <div style="padding:12px 14px;text-align:right;font:600 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#c2cbd9">—</div>
+              <div style="padding:12px 14px;text-align:right;font:600 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#c2cbd9">—</div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <!-- ==================== AD A/B TESTS ==================== -->
+      <sc-if value="{{ isAdtests }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px">
+          <div>
+            <h1 style="margin:0;font:600 22px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:-.021em;color:#0d2149">Ad A/B tests</h1>
+            <p style="margin:6px 0 0;font:400 12.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85;max-width:720px">Spin up controlled ad experiments across Google Ads and Meta. Gross-profit ROAS is the decision metric; spend guardrails flag losers once data flows.</p>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1.15fr 1fr;gap:14px">
+          <!-- builder -->
+          <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:18px">
+            <div style="font:600 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149;margin-bottom:14px">New ad test</div>
+            <div style="{{ cfgLabel }}">Platform</div>
+            <div style="display:flex;gap:6px;margin-bottom:14px">
+              <sc-for list="{{ adPlatforms }}" as="p" hint-placeholder-count="3">
+                <button onClick="{{ p.onClick }}" style="{{ p.style }}">{{ p.label }}</button>
+              </sc-for>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+              <div>
+                <div style="{{ cfgLabel }}">Objective</div>
+                <select value="{{ adObjective }}" onChange="{{ setAdObjective }}" style="{{ cfgInput }}">
+                  <sc-for list="{{ adObjectives }}" as="o" hint-placeholder-count="4"><option value="{{ o }}">{{ o }}</option></sc-for>
+                </select>
+              </div>
+              <div>
+                <div style="{{ cfgLabel }}">Test variable</div>
+                <select value="{{ adVariable }}" onChange="{{ setAdVariable }}" style="{{ cfgInput }}">
+                  <sc-for list="{{ adVariables }}" as="o" hint-placeholder-count="4"><option value="{{ o }}">{{ o }}</option></sc-for>
+                </select>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div style="background:#f5f5f7;border:1px solid #f0f0f3;border-radius:8px;padding:12px">
+                <div style="font:600 10px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149;letter-spacing:0;margin-bottom:9px">Variant A</div>
+                <input value="{{ adAHeadline }}" onInput="{{ setAdAHeadline }}" placeholder="Headline" style="{{ cfgInput }};margin-bottom:7px">
+                <textarea value="{{ adABody }}" onInput="{{ setAdABody }}" placeholder="Primary text" style="{{ promptArea }};min-height:56px"></textarea>
+                <div style="{{ creativeSlot }}">creative A</div>
+              </div>
+              <div style="background:#f6f9fe;border:1px solid {{ accentTintBorder }};border-radius:8px;padding:12px">
+                <div style="font:600 10px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:{{accent}};letter-spacing:0;margin-bottom:9px">Variant B</div>
+                <input value="{{ adBHeadline }}" onInput="{{ setAdBHeadline }}" placeholder="Headline" style="{{ cfgInput }};margin-bottom:7px">
+                <textarea value="{{ adBBody }}" onInput="{{ setAdBBody }}" placeholder="Primary text" style="{{ promptArea }};min-height:56px"></textarea>
+                <div style="{{ creativeSlotB }}">creative B</div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px">
+              <div>
+                <div style="{{ cfgLabel }}">Daily budget ({{ currency }})</div>
+                <input value="{{ adBudget }}" onInput="{{ setAdBudget }}" placeholder="120" style="{{ cfgInput }}">
+              </div>
+              <div>
+                <div style="{{ cfgLabel }}">Budget split (A / B)</div>
+                <div style="display:flex;gap:6px">
+                  <sc-for list="{{ adSplitOptions }}" as="s" hint-placeholder-count="3">
+                    <button onClick="{{ s.onClick }}" style="{{ s.style }}">{{ s.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+            <sc-if value="{{ adErr }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:13px;padding:10px 12px;background:#fdecea;border:1px solid #f4cfca;border-radius:6px;font:500 11.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#c0473f">{{ adErr }}</div>
+            </sc-if>
+            <button onClick="{{ createAdTest }}" style="{{ primaryBtn }};width:100%;margin-top:16px" style-hover="filter:brightness(1.06)">Queue ad test</button>
+          </div>
+
+          <!-- list -->
+          <div>
+            <div style="font:500 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#8a97ad;margin-bottom:10px">Queued & live tests · {{ adTestCount }}</div>
+            <sc-if value="{{ noAdTests }}" hint-placeholder-val="{{ true }}">
+              <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:44px 20px;text-align:center">
+                <div style="width:32px;height:32px;border:1.5px solid #d4dce8;border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font:600 17px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#aab4c6">+</div>
+                <div style="font:600 13px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149">No ad tests yet</div>
+                <div style="font:400 11.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85;margin-top:5px;max-width:280px;margin-left:auto;margin-right:auto">Build a variant test on the left. It queues here until Google Ads / Meta are connected.</div>
+              </div>
+            </sc-if>
+            <sc-for list="{{ adTestCards }}" as="a" hint-placeholder-count="0">
+              <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:14px 16px;margin-bottom:10px">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+                  <div style="min-width:0">
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                      <span style="font:600 12.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149">{{ a.name }}</span>
+                      <span style="font:500 10px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#41506b;background:#f0f3f9;border:1px solid #e5e5ea;padding:3px 6px;border-radius:4px">{{ a.platform }}</span>
+                    </div>
+                    <div style="margin-top:7px;display:flex;gap:14px;flex-wrap:wrap;font:500 10px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#8a97ad">
+                      <span>Variable&nbsp;<b style="color:#41506b">{{ a.variable }}</b></span>
+                      <span>Budget&nbsp;<b style="color:#41506b">{{ a.budget }}/day</b></span>
+                      <span>Split&nbsp;<b style="color:#41506b">{{ a.split }}</b></span>
+                    </div>
+                    <div style="margin-top:6px;font:500 10px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#8a97ad">GP-ROAS&nbsp;<b style="color:#c1841a">awaiting Meta / Google connection</b></div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:6px;flex:none;align-items:flex-end">
+                    <span style="font:500 10px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#c1841a;background:#fdf4e3;border:1px solid #f2e0b8;padding:3px 7px;border-radius:4px">{{ a.status }}</span>
+                    <button onClick="{{ a.remove }}" style="{{ dangerBtnSm }}" style-hover="filter:brightness(.98)">Delete</button>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ==================== RECOMMENDATIONS ==================== -->
+      <sc-if value="{{ isReco }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-bottom:16px">
+          <h1 style="margin:0;font:600 22px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:-.021em;color:#0d2149">Recommendations</h1>
+          <p style="margin:6px 0 0;font:400 12.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85">Rule-based insights scored by opportunity. The engine recommends — it never changes campaigns automatically.</p>
+        </div>
+        <div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap">
+          <div style="flex:1;min-width:260px;background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:15px 17px">
+            <div style="font:500 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#8a97ad;margin-bottom:8px">Opportunity score</div>
+            <div style="font:500 12.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#41506b;line-height:1.5">(Impact × Confidence × Relevance) ÷ Effort</div>
+          </div>
+          <sc-for list="{{ priorities }}" as="p" hint-placeholder-count="4">
+            <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:15px 17px;min-width:120px">
+              <div style="display:flex;align-items:center;gap:7px"><span style="width:8px;height:8px;border-radius:2px;background:{{ p.dot }}"></span><span style="font:600 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149">{{ p.label }}</span></div>
+              <div style="font:600 22px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#c2cbd9;margin-top:8px">—</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:52px 20px;text-align:center">
+          <div style="font:600 14px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149">No insights yet</div>
+          <div style="font:400 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85;margin-top:6px">Findings — wasted spend, CAC breaches, funnel leaks, margin destroyers — appear here after the first full sync.</div>
+        </div>
+      </sc-if>
+
+      <!-- ==================== DASHBOARD BUILDER ==================== -->
+      <sc-if value="{{ isBuilder }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px">
+          <div>
+            <h1 style="margin:0;font:600 22px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:-.021em;color:#0d2149">Dashboard builder</h1>
+            <p style="margin:6px 0 0;font:400 12.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85">Drag widgets onto the canvas. Every widget binds to a governed metric from the dictionary — no arbitrary SQL. Layout autosaves locally.</p>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button onClick="{{ clearLayout }}" style="{{ ghostBtn }}" style-hover="border-color:#c2cbd9">Clear layout</button>
+            <button onClick="{{ saveLayout }}" style="{{ primaryBtn }}" style-hover="filter:brightness(1.06)">Save layout</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:190px 1fr 238px;gap:12px;min-height:520px">
+          <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:13px;overflow-y:auto;max-height:640px">
+            <div style="font:500 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#8a97ad;margin-bottom:10px">Widgets · drag to canvas</div>
+            <sc-for list="{{ widgetTypes }}" as="w" hint-placeholder-count="16">
+              <div draggable="true" onDragStart="{{ w.onDragStart }}" onClick="{{ w.onClick }}" style="display:flex;align-items:center;gap:9px;padding:9px 10px;margin-bottom:5px;background:#f5f5f7;border:1px solid #f0f0f3;border-radius:6px;cursor:grab;font:500 11.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#41506b" style-hover="border-color:{{accent}}">
+                <span style="width:7px;height:7px;border-radius:2px;background:{{accent}};opacity:.75"></span>{{ w.label }}
+              </div>
+            </sc-for>
+          </div>
+          <div onDragOver="{{ canvasDragOver }}" onDrop="{{ canvasDrop }}" style="{{ canvasStyle }}">
+            <sc-if value="{{ canvasEmpty }}" hint-placeholder-val="{{ true }}">
+              <div style="grid-column:1/-1;align-self:center;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:480px">
+                <div style="width:34px;height:34px;border:1.5px solid #d4dce8;border-radius:18px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;font:600 18px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#aab4c6">+</div>
+                <div style="font:600 13px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85">Drop a widget to start</div>
+                <div style="font:400 11.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#8a97ad;margin-top:4px">12-column responsive grid · drag to reorder · click to configure</div>
+              </div>
+            </sc-if>
+            <sc-for list="{{ canvasWidgets }}" as="cw" hint-placeholder-count="0">
+              <div draggable="true" onDragStart="{{ cw.onDragStart }}" onDragOver="{{ cw.onDragOver }}" onDrop="{{ cw.onDrop }}" onClick="{{ cw.onClick }}" style="{{ cw.style }}">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
+                  <span style="font:600 10px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#7a88a0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ cw.title }}</span>
+                  <span style="font:500 10px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#aab4c6;flex:none">{{ cw.typeLabel }}</span>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px dashed #e5e5ea;border-radius:6px;min-height:64px">
+                  <div style="font:600 19px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#c2cbd9">—</div>
+                  <div style="font:500 9px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#aab4c6;margin-top:3px">Awaiting sync</div>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-top:8px;font:500 9px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#8a97ad">
+                  <span>{{ cw.metric }}</span><span>{{ cw.rangeLabel }}</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:13px;overflow-y:auto;max-height:640px">
+            <div style="font:500 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#8a97ad;margin-bottom:10px">Widget config</div>
+            <sc-if value="{{ noSelWidget }}" hint-placeholder-val="{{ true }}">
+              <div style="font:400 11.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#8a97ad;padding:6px 2px">Select a widget on the canvas to edit its metric, dimensions, date range, format and size.</div>
+            </sc-if>
+            <sc-if value="{{ selWidget }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-bottom:11px">
+                <div style="{{ cfgLabel }}">Title</div>
+                <input value="{{ selTitle }}" onInput="{{ setSelTitle }}" style="{{ cfgInput }}">
+              </div>
+              <div style="margin-bottom:11px">
+                <div style="{{ cfgLabel }}">Metric (governed dictionary)</div>
+                <select value="{{ selMetric }}" onChange="{{ setSelMetric }}" style="{{ cfgInput }}">
+                  <sc-for list="{{ metricOptions }}" as="o" hint-placeholder-count="18"><option value="{{ o }}">{{ o }}</option></sc-for>
+                </select>
+              </div>
+              <div style="margin-bottom:11px">
+                <div style="{{ cfgLabel }}">Dimension</div>
+                <select value="{{ selDim }}" onChange="{{ setSelDim }}" style="{{ cfgInput }}">
+                  <sc-for list="{{ dimOptions }}" as="o" hint-placeholder-count="8"><option value="{{ o }}">{{ o }}</option></sc-for>
+                </select>
+              </div>
+              <div style="margin-bottom:11px">
+                <div style="{{ cfgLabel }}">Date range</div>
+                <select value="{{ selRange }}" onChange="{{ setSelRange }}" style="{{ cfgInput }}">
+                  <sc-for list="{{ rangeOptions }}" as="o" hint-placeholder-count="8"><option value="{{ o }}">{{ o }}</option></sc-for>
+                </select>
+              </div>
+              <div style="margin-bottom:11px">
+                <div style="{{ cfgLabel }}">Attribution model</div>
+                <select value="{{ selAttr }}" onChange="{{ setSelAttr }}" style="{{ cfgInput }}">
+                  <sc-for list="{{ attrOptions }}" as="o" hint-placeholder-count="6"><option value="{{ o }}">{{ o }}</option></sc-for>
+                </select>
+              </div>
+              <div style="margin-bottom:11px">
+                <div style="{{ cfgLabel }}">Number format</div>
+                <select value="{{ selFormat }}" onChange="{{ setSelFormat }}" style="{{ cfgInput }}">
+                  <sc-for list="{{ formatOptions }}" as="o" hint-placeholder-count="4"><option value="{{ o }}">{{ o }}</option></sc-for>
+                </select>
+              </div>
+              <div style="margin-bottom:11px">
+                <div style="{{ cfgLabel }}">Compare vs. previous period</div>
+                <button onClick="{{ toggleSelCompare }}" style="{{ selCompareStyle }}">{{ selCompareLabel }}</button>
+              </div>
+              <div style="margin-bottom:13px">
+                <div style="{{ cfgLabel }}">Width · {{ selSpan }} / 12 columns</div>
+                <div style="display:flex;gap:6px">
+                  <button onClick="{{ selNarrower }}" style="{{ ghostBtnSm }}" style-hover="border-color:#c2cbd9">− narrower</button>
+                  <button onClick="{{ selWider }}" style="{{ ghostBtnSm }}" style-hover="border-color:#c2cbd9">+ wider</button>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;border-top:1px solid #f0f0f3;padding-top:12px">
+                <button onClick="{{ duplicateSel }}" style="{{ ghostBtnSm }}" style-hover="border-color:#c2cbd9">Duplicate</button>
+                <button onClick="{{ deleteSel }}" style="{{ dangerBtnSm }}" style-hover="filter:brightness(.98)">Delete</button>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ==================== AI PAGE BUILDER ==================== -->
+      <sc-if value="{{ isAipages }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px">
+          <div>
+            <h1 style="margin:0;font:600 22px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:-.021em;color:#0d2149">AI page builder</h1>
+            <p style="margin:6px 0 0;font:400 12.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85;max-width:720px">Describe the metrics and cuts you need in plain language. Claude Code generates a governed analytics page — every widget binds to a metric from the dictionary.</p>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:380px 1fr;gap:14px">
+          <!-- composer -->
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:16px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                <span style="width:22px;height:22px;border-radius:6px;background:{{accent}};display:flex;align-items:center;justify-content:center;font:800 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#fff">✦</span>
+                <span style="font:600 12.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149">Describe your page</span>
+              </div>
+              <textarea value="{{ aiPrompt }}" onInput="{{ setAiPrompt }}" placeholder="e.g. Create a page with blended ROAS, gross-profit ROAS, and paid CAC broken down by channel for the last 30 days." style="{{ promptArea }};min-height:120px"></textarea>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin:11px 0 13px">
+                <sc-for list="{{ aiIdeas }}" as="i" hint-placeholder-count="4">
+                  <button onClick="{{ i.onClick }}" style="{{ chip }}" style-hover="border-color:{{accent}};color:{{accent}}">{{ i.label }}</button>
+                </sc-for>
+              </div>
+              <button onClick="{{ generateAiPage }}" style="{{ primaryBtn }};width:100%" style-hover="filter:brightness(1.06)">Generate page with Claude</button>
+            </div>
+            <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:16px;flex:1">
+              <div style="font:500 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#8a97ad;margin-bottom:11px">Page library · {{ aiPageCount }}</div>
+              <sc-if value="{{ noAiPages }}" hint-placeholder-val="{{ true }}">
+                <div style="font:400 11.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#8a97ad;padding:4px 2px">No generated pages yet. Your saved pages appear here — reopen or delete any time.</div>
+              </sc-if>
+              <sc-for list="{{ aiPageList }}" as="p" hint-placeholder-count="0">
+                <div onClick="{{ p.onClick }}" style="{{ p.style }}" style-hover="border-color:{{accent}}">
+                  <div style="min-width:0">
+                    <div style="font:600 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.title }}</div>
+                    <div style="font:500 9.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#8a97ad;margin-top:3px">{{ p.meta }}</div>
+                  </div>
+                  <button onClick="{{ p.remove }}" style="border:none;background:transparent;color:#aab4c6;font-size:16px;cursor:pointer;line-height:1;padding:0 4px;flex:none">×</button>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <!-- preview -->
+          <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;overflow:hidden;display:flex;flex-direction:column">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 16px;border-bottom:1px solid #f0f0f3">
+              <div style="display:flex;align-items:center;gap:9px;min-width:0">
+                <span style="font:600 13px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ aiPreviewTitle }}</span>
+                <sc-if value="{{ hasAiPage }}" hint-placeholder-val="{{ false }}">
+                  <span style="font:500 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:{{accent}};background:{{ accentTint }};padding:3px 7px;border-radius:4px;letter-spacing:0;flex:none">Generated · Claude Code</span>
+                </sc-if>
+              </div>
+              <sc-if value="{{ hasAiPage }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;gap:7px;flex:none">
+                  <button onClick="{{ saveAiPage }}" style="{{ ghostBtnSm }}" style-hover="border-color:#c2cbd9">Save to library</button>
+                  <button onClick="{{ discardAiPage }}" style="{{ dangerBtnSm }}" style-hover="filter:brightness(.98)">Discard</button>
+                </div>
+              </sc-if>
+            </div>
+            <div style="flex:1;padding:18px;background:#fbfcfe;overflow-y:auto">
+              <sc-if value="{{ noAiPage }}" hint-placeholder-val="{{ true }}">
+                <div style="height:100%;min-height:420px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+                  <div style="width:40px;height:40px;border-radius:18px;border:1.5px dashed #cfd8e6;display:flex;align-items:center;justify-content:center;margin-bottom:14px;font:600 18px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:{{accent}}">✦</div>
+                  <div style="font:600 14px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149">Your generated page previews here</div>
+                  <div style="font:400 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#8a97ad;margin-top:6px;max-width:400px">Describe the metrics you want on the left. Claude assembles the layout and binds each widget to a governed metric.</div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ hasAiPage }}" hint-placeholder-val="{{ false }}">
+                <div style="font:400 11.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85;margin-bottom:14px;padding:11px 13px;background:#fff;border:1px solid #f0f0f3;border-radius:8px">“{{ aiPromptEcho }}”</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:11px;margin-bottom:12px">
+                  <sc-for list="{{ aiMetricCards }}" as="m" hint-placeholder-count="3">
+                    <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:14px">
+                      <div style="font:600 10px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#7a88a0;margin-bottom:9px;line-height:1.25">{{ m.label }}</div>
+                      <div style="font:600 24px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#c2cbd9">—</div>
+                      <div style="margin-top:9px;height:16px;border-radius:4px;background:linear-gradient(90deg,#eef2f7,#f5f5f7,#eef2f7);background-size:200% 100%;animation:shim 1.8s linear infinite"></div>
+                      <div style="margin-top:9px"><span style="{{ awaitBadge }}">Awaiting sync</span></div>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:11px">
+                  <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:15px">
+                    <div style="font:600 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149;margin-bottom:12px">{{ aiChartTitle }}</div>
+                    <div style="{{ chartFrame }}">
+                      <div style="{{ chartOverlay }}"><div style="font:600 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#8a97ad">Series render after first sync</div></div>
+                    </div>
+                  </div>
+                  <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:15px">
+                    <div style="font:600 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149;margin-bottom:12px">Breakdown by {{ aiDim }}</div>
+                    <sc-for list="{{ aiBreakdownRows }}" as="r" hint-placeholder-count="5">
+                      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f2f2f5">
+                        <div style="height:9px;width:44%;border-radius:3px;background:linear-gradient(90deg,#eef2f7,#f5f5f7,#eef2f7);background-size:200% 100%;animation:shim 1.8s linear infinite"></div>
+                        <span style="font:600 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#c2cbd9">—</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+                <div style="margin-top:12px;display:flex;align-items:center;gap:8px;font:500 10px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#8a97ad">
+                  <span style="width:6px;height:6px;border-radius:50%;background:{{accent}}"></span>Bound to {{ aiMetricCount }} governed metrics · {{ aiRangeEcho }} · Shopify-verified where available
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ==================== DATA QUALITY ==================== -->
+      <sc-if value="{{ isQuality }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px">
+          <div>
+            <h1 style="margin:0;font:600 22px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:-.021em;color:#0d2149">Data-quality center</h1>
+            <p style="margin:6px 0 0;font:400 12.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85">Source health, validation and financial reconciliation. Missing data is surfaced, never hidden.</p>
+          </div>
+          <button onClick="{{ syncNow }}" style="{{ primaryBtn }}" style-hover="filter:brightness(1.06)">{{ syncBtnLabel }}</button>
+        </div>
+        <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;overflow:hidden;margin-bottom:12px">
+          <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr;background:#f5f5f7;border-bottom:1px solid #e5e5ea">
+            <div style="{{ thL }}">Source</div><div style="{{ thR }}">Status</div><div style="{{ thR }}">Last sync</div><div style="{{ thR }}">Rows</div><div style="{{ thR }}">Schema</div>
+          </div>
+          <sc-for list="{{ sources }}" as="s" hint-placeholder-count="6">
+            <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr;border-bottom:1px solid #f2f2f5;align-items:center">
+              <div style="padding:12px 14px;font:500 12.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149">{{ s.label }}</div>
+              <div style="padding:12px 14px;text-align:right"><span style="{{ s.statusStyle }}">{{ s.statusLabel }}</span></div>
+              <div style="padding:12px 14px;text-align:right;font:500 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:{{ s.lastSyncColor }}">{{ s.lastSync }}</div>
+              <div style="padding:12px 14px;text-align:right;font:600 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#c2cbd9">{{ s.rows }}</div>
+              <div style="padding:12px 14px;text-align:right;font:500 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#8a97ad">—</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:15px 17px">
+            <div style="font:600 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149;margin-bottom:12px">Validation checks</div>
+            <sc-for list="{{ validations }}" as="v" hint-placeholder-count="11">
+              <div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid #f2f2f5">
+                <span style="width:6px;height:6px;border-radius:50%;background:#c2cbd9"></span>
+                <span style="flex:1;font:500 11.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#41506b">{{ v }}</span>
+                <span style="font:500 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#8a97ad">{{ validationState }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:15px 17px">
+            <div style="font:600 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149;margin-bottom:12px">Financial reconciliation</div>
+            <sc-for list="{{ reconLines }}" as="r" hint-placeholder-count="6">
+              <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f2f2f5">
+                <span style="font:500 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:{{ r.color }}">{{ r.label }}</span>
+                <span style="font:600 13px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#c2cbd9">—</span>
+              </div>
+            </sc-for>
+            <div style="margin-top:12px;padding:11px 13px;background:#f5f5f7;border:1px solid #f0f0f3;border-radius:8px;font:400 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85">COGS completeness <b style="color:#cf5b52">0%</b> · Attribution coverage <b style="color:#cf5b52">0%</b> · Overall confidence <b style="color:#cf5b52">{{ confidenceWord }}</b></div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ==================== SETTINGS ==================== -->
+      <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-bottom:16px">
+          <h1 style="margin:0;font:600 22px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:-.021em;color:#0d2149">System settings</h1>
+          <p style="margin:6px 0 0;font:400 12.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85">Reporting defaults and executive targets. Saved locally in this prototype; served by <code style="font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif">/api/settings</code> in production.</p>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:980px">
+          <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:17px 19px">
+            <div style="font:600 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149;margin-bottom:14px">Reporting defaults</div>
+            <div style="margin-bottom:13px">
+              <div style="{{ cfgLabel }}">Reporting currency</div>
+              <div style="display:flex;gap:6px">
+                <button onClick="{{ setCAD }}" style="{{ cadSetStyle }}">CAD</button>
+                <button onClick="{{ setUSD }}" style="{{ usdSetStyle }}">USD</button>
+              </div>
+            </div>
+            <div style="margin-bottom:13px">
+              <div style="{{ cfgLabel }}">Company reporting timezone</div>
+              <select value="{{ timezone }}" onChange="{{ setTimezone }}" style="{{ cfgInput }}">
+                <sc-for list="{{ tzOptions }}" as="o" hint-placeholder-count="5"><option value="{{ o }}">{{ o }}</option></sc-for>
+              </select>
+            </div>
+            <div style="margin-bottom:13px">
+              <div style="{{ cfgLabel }}">Default date range</div>
+              <select value="{{ defaultRange }}" onChange="{{ setDefaultRange }}" style="{{ cfgInput }}">
+                <sc-for list="{{ defaultRangeOptions }}" as="o" hint-placeholder-count="7"><option value="{{ o.id }}">{{ o.label }}</option></sc-for>
+              </select>
+            </div>
+            <div>
+              <div style="{{ cfgLabel }}">Compare vs. previous period by default</div>
+              <button onClick="{{ toggleCompare }}" style="{{ compareSetStyle }}">{{ compareSetLabel }}</button>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:17px 19px">
+            <div style="font:600 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149;margin-bottom:14px">Executive targets</div>
+            <sc-for list="{{ targetFields }}" as="t" hint-placeholder-count="6">
+              <div style="margin-bottom:11px">
+                <div style="{{ cfgLabel }}">{{ t.label }}</div>
+                <input value="{{ t.value }}" onInput="{{ t.onInput }}" placeholder="{{ t.ph }}" style="{{ cfgInput }}">
+              </div>
+            </sc-for>
+          </div>
+          <div style="background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:17px 19px;grid-column:1/-1">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+              <div>
+                <div style="font:600 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149">Local prototype data</div>
+                <div style="font:400 11.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85;margin-top:4px">Clears connection config, saved layouts, experiments, AI pages and settings stored in this browser. No server data is touched.</div>
+              </div>
+              <div style="display:flex;gap:8px;flex:none">
+                <button onClick="{{ saveSettings }}" style="{{ primaryBtn }}" style-hover="filter:brightness(1.06)">Save settings</button>
+                <button onClick="{{ resetAll }}" style="{{ dangerBtnSm }}" style-hover="filter:brightness(.98)">Reset local data</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+    </main>
+  </div>
+
+  <!-- ============ CONNECT MODAL ============ -->
+  <sc-if value="{{ showConnect }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeConnect }}" style="position:fixed;inset:0;z-index:60;background:rgba(13,33,73,.34);display:flex;align-items:center;justify-content:center;padding:24px">
+      <div onClick="{{ stop }}" style="width:548px;max-width:94vw;max-height:88vh;overflow-y:auto;background:#fff;border:1px solid #e5e5ea;border-radius:20px;box-shadow:0 24px 70px rgba(13,33,73,.22)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid #f0f0f3">
+          <div style="display:flex;align-items:center;gap:9px">
+            <span style="width:22px;height:22px;border-radius:6px;background:{{navy}};display:flex;align-items:center;justify-content:center;font:800 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#fff">S</span>
+            <span style="font:600 14px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149">Connect Supermetrics</span>
+          </div>
+          <button onClick="{{ closeConnect }}" style="border:none;background:transparent;color:#8a97ad;font-size:20px;cursor:pointer;line-height:1;padding:2px 6px">×</button>
+        </div>
+        <div style="padding:18px">
+          <div style="display:flex;gap:9px;padding:11px 12px;background:#fdf7ea;border:1px solid #f2e0b8;border-radius:8px;margin-bottom:16px">
+            <span style="color:#c1841a;font-size:13px;line-height:1.3">⚠</span>
+            <div style="font:400 11.5px/1.5 -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#8a6d2f">Supermetrics is called <b>server-side</b> for security. Point this at your backend sync endpoint (the spec's <code style="font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149">/api/integrations/supermetrics</code> route). The API key is forwarded to your backend once and is <b>never persisted in the browser</b>.</div>
+          </div>
+          <label style="display:block;font:600 10px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#7a88a0;margin-bottom:6px">Backend sync endpoint (required)</label>
+          <input value="{{ endpoint }}" onInput="{{ setEndpoint }}" placeholder="https://your-app.com/api/integrations/status" style="{{ inputStyle }}">
+          <label style="display:block;font:600 10px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#7a88a0;margin:15px 0 6px">Supermetrics API key (sent to your backend only)</label>
+          <input value="{{ apiKey }}" onInput="{{ setApiKey }}" type="password" placeholder="kept out of the browser — passed to your backend" style="{{ inputStyle }}">
+          <label style="display:block;font:600 10px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#7a88a0;margin:15px 0 8px">Sources to sync</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <sc-for list="{{ srcToggles }}" as="t" hint-placeholder-count="4">
+              <div onClick="{{ t.onClick }}" style="{{ t.style }}"><span style="width:8px;height:8px;border-radius:2px;background:{{ t.dot }};flex:none"></span>{{ t.label }}</div>
+            </sc-for>
+          </div>
+          <sc-if value="{{ statusMsg }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:15px;padding:10px 12px;background:#f5f5f7;border:1px solid #f0f0f3;border-radius:6px;font:500 11.5px/1.5 -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:{{ statusColor }}">{{ statusMsg }}</div>
+          </sc-if>
+        </div>
+        <div style="display:flex;justify-content:space-between;gap:9px;padding:14px 18px;border-top:1px solid #f0f0f3">
+          <sc-if value="{{ connected }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ disconnect }}" style="{{ dangerBtnSm }}" style-hover="filter:brightness(.98)">Disconnect</button>
+          </sc-if>
+          <sc-if value="{{ notConnected }}" hint-placeholder-val="{{ true }}"><span></span></sc-if>
+          <div style="display:flex;gap:9px">
+            <button onClick="{{ closeConnect }}" style="{{ ghostBtn }}" style-hover="border-color:#c2cbd9">Cancel</button>
+            <button onClick="{{ testConnection }}" style="{{ ghostBtn }}" style-hover="border-color:#c2cbd9">Test connection</button>
+            <sc-if value="{{ connected }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ syncNow }}" style="{{ ghostBtn }}" style-hover="border-color:#c2cbd9">Sync now</button>
+            </sc-if>
+            <button onClick="{{ saveClose }}" style="{{ primaryBtn }}" style-hover="filter:brightness(1.06)">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ NEW EXPERIMENT MODAL ============ -->
+  <sc-if value="{{ showExpModal }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeExpModal }}" style="position:fixed;inset:0;z-index:60;background:rgba(13,33,73,.34);display:flex;align-items:center;justify-content:center;padding:24px">
+      <div onClick="{{ stop }}" style="width:564px;max-width:94vw;max-height:88vh;overflow-y:auto;background:#fff;border:1px solid #e5e5ea;border-radius:20px;box-shadow:0 24px 70px rgba(13,33,73,.22)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid #f0f0f3">
+          <span style="font:600 14px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149">Draft experiment</span>
+          <button onClick="{{ closeExpModal }}" style="border:none;background:transparent;color:#8a97ad;font-size:20px;cursor:pointer;line-height:1;padding:2px 6px">×</button>
+        </div>
+        <div style="padding:18px">
+          <div style="margin-bottom:13px">
+            <div style="{{ cfgLabel }}">Experiment name</div>
+            <input value="{{ expName }}" onInput="{{ setExpName }}" placeholder="e.g. PDP sample CTA — sticky vs. inline" style="{{ inputStyle }}">
+          </div>
+          <div style="margin-bottom:13px">
+            <div style="{{ cfgLabel }}">Hypothesis</div>
+            <input value="{{ expHypothesis }}" onInput="{{ setExpHypothesis }}" placeholder="If we …, then … because …" style="{{ inputStyle }}">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:13px">
+            <div>
+              <div style="{{ cfgLabel }}">Test type</div>
+              <select value="{{ expType }}" onChange="{{ setExpType }}" style="{{ cfgInput }}">
+                <option value="Website test">Website test</option>
+                <option value="Ad test">Ad test</option>
+              </select>
+            </div>
+            <div>
+              <div style="{{ cfgLabel }}">Primary metric</div>
+              <select value="{{ expMetric }}" onChange="{{ setExpMetric }}" style="{{ cfgInput }}">
+                <sc-for list="{{ metricOptions }}" as="o" hint-placeholder-count="18"><option value="{{ o }}">{{ o }}</option></sc-for>
+              </select>
+            </div>
+            <div>
+              <div style="{{ cfgLabel }}">Guardrail metric</div>
+              <select value="{{ expGuardrail }}" onChange="{{ setExpGuardrail }}" style="{{ cfgInput }}">
+                <sc-for list="{{ guardrailOptions }}" as="o" hint-placeholder-count="8"><option value="{{ o }}">{{ o }}</option></sc-for>
+              </select>
+            </div>
+            <div>
+              <div style="{{ cfgLabel }}">Min. detectable effect %</div>
+              <input value="{{ expMde }}" onInput="{{ setExpMde }}" placeholder="5" style="{{ cfgInput }}">
+            </div>
+          </div>
+          <div style="margin-bottom:4px">
+            <div style="{{ cfgLabel }}">Traffic allocation % · {{ expTraffic }}</div>
+            <div style="display:flex;gap:5px">
+              <sc-for list="{{ trafficOptions }}" as="t" hint-placeholder-count="4">
+                <button onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <sc-if value="{{ expErr }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:13px;padding:10px 12px;background:#fdecea;border:1px solid #f4cfca;border-radius:6px;font:500 11.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#c0473f">{{ expErr }}</div>
+          </sc-if>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:9px;padding:14px 18px;border-top:1px solid #f0f0f3">
+          <button onClick="{{ closeExpModal }}" style="{{ ghostBtn }}" style-hover="border-color:#c2cbd9">Cancel</button>
+          <button onClick="{{ createExperiment }}" style="{{ primaryBtn }}" style-hover="filter:brightness(1.06)">Create draft</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ NEW CUSTOMER TYPE MODAL ============ -->
+  <sc-if value="{{ showTypeModal }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeTypeModal }}" style="position:fixed;inset:0;z-index:60;background:rgba(13,33,73,.34);display:flex;align-items:center;justify-content:center;padding:24px">
+      <div onClick="{{ stop }}" style="width:480px;max-width:94vw;background:#fff;border:1px solid #e5e5ea;border-radius:20px;box-shadow:0 24px 70px rgba(13,33,73,.22)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid #f0f0f3">
+          <span style="font:600 14px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#0d2149">New customer type</span>
+          <button onClick="{{ closeTypeModal }}" style="border:none;background:transparent;color:#8a97ad;font-size:20px;cursor:pointer;line-height:1;padding:2px 6px">×</button>
+        </div>
+        <div style="padding:18px">
+          <div style="margin-bottom:13px">
+            <div style="{{ cfgLabel }}">Type name</div>
+            <input value="{{ typeName }}" onInput="{{ setTypeName }}" placeholder="e.g. Hospitality designer" style="{{ inputStyle }}">
+          </div>
+          <div style="margin-bottom:13px">
+            <div style="{{ cfgLabel }}">Classification</div>
+            <select value="{{ typeKind }}" onChange="{{ setTypeKind }}" style="{{ cfgInput }}">
+              <option value="Trade">Trade</option>
+              <option value="Consumer">Consumer</option>
+            </select>
+          </div>
+          <div>
+            <div style="{{ cfgLabel }}">Assignment rule</div>
+            <input value="{{ typeRule }}" onInput="{{ setTypeRule }}" placeholder="e.g. Survey answer = 'Designer' OR trade tag present" style="{{ inputStyle }}">
+          </div>
+          <sc-if value="{{ typeErr }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:13px;padding:10px 12px;background:#fdecea;border:1px solid #f4cfca;border-radius:6px;font:500 11.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#c0473f">{{ typeErr }}</div>
+          </sc-if>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:9px;padding:14px 18px;border-top:1px solid #f0f0f3">
+          <button onClick="{{ closeTypeModal }}" style="{{ ghostBtn }}" style-hover="border-color:#c2cbd9">Cancel</button>
+          <button onClick="{{ createType }}" style="{{ primaryBtn }}" style-hover="filter:brightness(1.06)">Add type</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ TOAST ============ -->
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;right:18px;bottom:18px;z-index:80;padding:11px 16px;background:#0d2149;border-radius:18px;font:600 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#fff;box-shadow:0 12px 40px rgba(13,33,73,.28);animation:toastin .18s ease-out">{{ toast }}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;accentColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#1f5fd0&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Appearance&quot;},&quot;dataState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;disconnected&quot;,&quot;syncing&quot;],&quot;default&quot;:&quot;syncing&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;State&quot;}}">
+class Component extends DCLogic {
+  state = { view:'exec', range:'30d', currency:'CAD', compare:true,
+    timezone:'America/Toronto', defaultRange:'30d',
+    customFrom:'', customTo:'',
+    targets:{ roas:'4.0', gproas:'1.8', cac:'180', csat:'90', musthave:'40', margin:'55' },
+    showConnect:false, endpoint:'', apiKey:'',
+    srcOn:{ 'google-ads':true, 'meta-ads':true, 'ga4':true, 'shopify':true },
+    status:'idle', msg:'', connected:false, lastSync:null, lastRows:null, syncing:false,
+    drill:0, funnelDim:0, cohortDim:0, productDim:0,
+    experiments:[], expFilter:'All', showExpModal:false, expErr:'',
+    expName:'', expHypothesis:'', expType:'Website test', expMetric:'Conversion rate',
+    expGuardrail:'Gross margin', expMde:'5', expTraffic:50,
+    widgets:[], selId:null, drag:null,
+    // AI page builder
+    aiPrompt:'', aiPages:[], activeAiPage:null,
+    // landing A/B
+    landingSource:'/', landingType:'Single variable', landingPrompt:'', landingVariant:null,
+    landingSplit:'50 / 50', landingMetric:'Conversion rate', landingGuardrail:'Refund rate',
+    landingRuntime:'14 days', landingPublished:false,
+    // ad A/B
+    adPlatform:'Meta Ads', adObjective:'Conversions', adVariable:'Creative',
+    adAHeadline:'', adABody:'', adBHeadline:'', adBBody:'', adBudget:'', adSplit:'50 / 50',
+    adTests:[], adErr:'',
+    // customer types
+    customTypes:[], showTypeModal:false, typeName:'', typeKind:'Trade', typeRule:'', typeErr:'',
+    toast:'' };
+
+  componentDidMount(){
+    try {
+      const c = JSON.parse(localStorage.getItem('ud2_conn')||'null');
+      if(c) this.setState({ endpoint:c.endpoint||'', srcOn:c.srcOn||this.state.srcOn, connected:!!c.connected, lastSync:c.lastSync||null, lastRows:c.lastRows??null });
+      const s = JSON.parse(localStorage.getItem('ud2_settings')||'null');
+      if(s) this.setState({ currency:s.currency||'CAD', timezone:s.timezone||'America/Toronto', defaultRange:s.defaultRange||'30d', compare:s.compare!==false, targets:{...this.state.targets,...(s.targets||{})}, range:s.defaultRange||'30d' });
+      const x = JSON.parse(localStorage.getItem('ud2_experiments')||'null');
+      if(Array.isArray(x)) this.setState({ experiments:x });
+      const w = JSON.parse(localStorage.getItem('ud2_widgets')||'null');
+      if(Array.isArray(w)) this.setState({ widgets:w });
+      const p = JSON.parse(localStorage.getItem('ud2_aipages')||'null');
+      if(Array.isArray(p)) this.setState({ aiPages:p });
+      const a = JSON.parse(localStorage.getItem('ud2_adtests')||'null');
+      if(Array.isArray(a)) this.setState({ adTests:a });
+      const t = JSON.parse(localStorage.getItem('ud2_types')||'null');
+      if(Array.isArray(t)) this.setState({ customTypes:t });
+    } catch(e){}
+  }
+  persistConn(){ const { endpoint, srcOn, connected, lastSync, lastRows } = this.state;
+    try { localStorage.setItem('ud2_conn', JSON.stringify({ endpoint, srcOn, connected, lastSync, lastRows })); } catch(e){} }
+  persistSettings(){ const { currency, timezone, defaultRange, compare, targets } = this.state;
+    try { localStorage.setItem('ud2_settings', JSON.stringify({ currency, timezone, defaultRange, compare, targets })); } catch(e){} }
+  persistExperiments(list){ try { localStorage.setItem('ud2_experiments', JSON.stringify(list)); } catch(e){} }
+  persistWidgets(list){ try { localStorage.setItem('ud2_widgets', JSON.stringify(list)); } catch(e){} }
+  persistAiPages(list){ try { localStorage.setItem('ud2_aipages', JSON.stringify(list)); } catch(e){} }
+  persistAdTests(list){ try { localStorage.setItem('ud2_adtests', JSON.stringify(list)); } catch(e){} }
+  persistTypes(list){ try { localStorage.setItem('ud2_types', JSON.stringify(list)); } catch(e){} }
+  showToast(t){ this.setState({ toast:t }); clearTimeout(this._toastT); this._toastT = setTimeout(()=>this.setState({ toast:'' }), 2600); }
+
+  // ---------- connector ----------
+  hitEndpoint = async (verb) => {
+    const ep = (this.state.endpoint||'').trim();
+    if(!ep){ this.setState({ status:'error', msg:'Enter your backend endpoint URL first. Supermetrics must be called server-side — the API key is never sent from the browser.' }); return; }
+    this.setState({ status:'testing', syncing:true, msg: verb==='sync' ? 'Requesting sync…' : 'Contacting endpoint…' });
+    try {
+      const res = await fetch(ep, { method:'GET', headers:{ 'Accept':'application/json' } });
+      if(!res.ok){ this.setState({ status:'error', syncing:false, msg:'Endpoint responded '+res.status+' '+res.statusText+'. Check the route and that it is deployed.' }); return; }
+      let rows = null;
+      try { const j = await res.json(); rows = Array.isArray(j) ? j.length : ((j && (j.rows ?? j.count)) ?? null); } catch(e){}
+      const ts = new Date().toISOString();
+      this.setState({ status:'ok', connected:true, syncing:false, lastSync:ts, lastRows:rows,
+        msg:(verb==='sync'?'Sync completed. ':'Connected. ')+(rows!=null ? rows+' rows returned by endpoint.' : 'Endpoint reachable — configure source mappings to ingest.') }, ()=>this.persistConn());
+      if(verb==='sync') this.showToast('Sync completed');
+    } catch(err){
+      this.setState({ status:'error', syncing:false, msg:'Could not reach endpoint: '+err.message+'. It must be same-origin or send CORS headers allowing this origin.' });
+    }
+  };
+  testConnection = () => this.hitEndpoint('test');
+  syncNow = () => { if(this.state.connected||this.state.endpoint) this.hitEndpoint('sync'); else this.setState({ showConnect:true, status:'idle', msg:'' }); };
+  saveClose = () => { this.persistConn(); this.setState({ showConnect:false }); this.showToast('Connection settings saved'); };
+  disconnect = () => this.setState({ connected:false, lastSync:null, lastRows:null, status:'idle', msg:'Disconnected. The stored endpoint stays; hit Test connection to reconnect.' }, ()=>this.persistConn());
+
+  // ---------- experiments ----------
+  createExperiment = () => {
+    const s = this.state;
+    if(!s.expName.trim()){ this.setState({ expErr:'Name the experiment.' }); return; }
+    if(!s.expHypothesis.trim()){ this.setState({ expErr:'A hypothesis is required — "If we …, then … because …".' }); return; }
+    const exp = { id:Date.now(), name:s.expName.trim(), hypothesis:s.expHypothesis.trim(), type:s.expType,
+      metric:s.expMetric, guardrail:s.expGuardrail, mde:s.expMde||'5', traffic:s.expTraffic, status:'Draft' };
+    const list = [exp, ...s.experiments];
+    this.setState({ experiments:list, showExpModal:false, expErr:'', expName:'', expHypothesis:'' });
+    this.persistExperiments(list);
+    this.showToast('Experiment drafted — route it for approval');
+  };
+  setExpStatus(id, status){ const list = this.state.experiments.map(e=>e.id===id?{...e,status}:e);
+    this.setState({ experiments:list }); this.persistExperiments(list); this.showToast('Experiment → '+status); }
+  removeExperiment(id){ const list = this.state.experiments.filter(e=>e.id!==id);
+    this.setState({ experiments:list }); this.persistExperiments(list); this.showToast('Experiment deleted'); }
+
+  // ---------- builder ----------
+  addWidget(type, span){
+    const id = Date.now()+Math.floor(Math.random()*1e4);
+    const w = { id, type, span:span||4, title:type, metric:'Total revenue', dim:'None',
+      range:'Inherit dashboard', attr:'Shopify-verified', format:'Currency', compare:true };
+    const list = [...this.state.widgets, w];
+    this.setState({ widgets:list, selId:id }); this.persistWidgets(list);
+  }
+  patchSel(patch){ const list = this.state.widgets.map(w=>w.id===this.state.selId?{...w,...patch}:w);
+    this.setState({ widgets:list }); this.persistWidgets(list); }
+  moveWidget(fromId, toId){
+    if(fromId===toId) return;
+    const list = [...this.state.widgets];
+    const fi = list.findIndex(w=>w.id===fromId); const ti = list.findIndex(w=>w.id===toId);
+    if(fi<0||ti<0) return;
+    const [m] = list.splice(fi,1); list.splice(ti,0,m);
+    this.setState({ widgets:list }); this.persistWidgets(list);
+  }
+
+  // ---------- AI page builder ----------
+  metricDictionary(){
+    return ['Total revenue','Gross profit','Gross profit %','Contribution profit','Operating profit','Total ad spend','Blended ROAS','Gross-profit ROAS','Paid CAC','Blended CAC','New customers','AOV','Conversion rate','Gross-profit CLTV','LTV : CAC','CSAT','NPS','Must-have score','Refund rate','Sample-to-order conv.'];
+  }
+  parsePrompt(prompt){
+    const p = (prompt||'').toLowerCase();
+    const dict = this.metricDictionary();
+    let matched = dict.filter(m=>p.includes(m.toLowerCase()));
+    // loose aliases
+    const alias = [['roas','Blended ROAS'],['cac','Paid CAC'],['revenue','Total revenue'],['margin','Gross profit %'],['profit','Gross profit'],['ltv','Gross-profit CLTV'],['cltv','Gross-profit CLTV'],['aov','AOV'],['conversion','Conversion rate'],['customers','New customers'],['sample','Sample-to-order conv.'],['refund','Refund rate']];
+    alias.forEach(([k,m])=>{ if(p.includes(k) && !matched.includes(m)) matched.push(m); });
+    if(matched.length===0) matched = ['Total revenue','Gross profit','Paid CAC'];
+    matched = matched.slice(0,6);
+    const dims = ['channel','campaign','product','segment','customer type','device','geography','landing page'];
+    const foundDim = dims.find(d=>p.includes(d)) || 'channel';
+    const ranges = [['last 7','Last 7 days'],['7 day','Last 7 days'],['last 30','Last 30 days'],['30 day','Last 30 days'],['last 90','Last 90 days'],['90 day','Last 90 days'],['month to date','Month to date'],['quarter','Quarter to date'],['year','Year to date']];
+    let range = 'Last 30 days'; const rHit = ranges.find(([k])=>p.includes(k)); if(rHit) range = rHit[1];
+    return { metrics:matched, dim:foundDim, range };
+  }
+  titleFromPrompt(prompt, parsed){
+    const t = (prompt||'').trim();
+    if(!t) return 'Untitled page';
+    let title = t.replace(/^(create|make|build|generate|show me|give me|i want|please)\s+(a|an|the)?\s*(page|dashboard|report|view)?\s*(with|showing|for|of|that shows)?\s*/i,'').trim();
+    if(!title) title = parsed.metrics.slice(0,3).join(', ');
+    title = title.charAt(0)+title.slice(1);
+    if(title.length>64) title = title.slice(0,61)+'…';
+    return title;
+  }
+  generateAiPage = () => {
+    const prompt = this.state.aiPrompt.trim();
+    if(!prompt){ this.showToast('Describe the page you want first'); return; }
+    const parsed = this.parsePrompt(prompt);
+    const page = { id:Date.now(), title:this.titleFromPrompt(prompt,parsed), prompt,
+      metrics:parsed.metrics, dim:parsed.dim, range:parsed.range, createdAt:new Date().toISOString() };
+    this.setState({ activeAiPage:page });
+    this.showToast('Page generated with Claude Code');
+  };
+  saveAiPage = () => {
+    const p = this.state.activeAiPage; if(!p) return;
+    const exists = this.state.aiPages.some(x=>x.id===p.id);
+    const list = exists ? this.state.aiPages : [p, ...this.state.aiPages];
+    this.setState({ aiPages:list }); this.persistAiPages(list); this.showToast('Saved to page library');
+  };
+  discardAiPage = () => { this.setState({ activeAiPage:null }); };
+  openAiPage(id){ const p = this.state.aiPages.find(x=>x.id===id); if(p) this.setState({ activeAiPage:p, view:'aipages' }); }
+  removeAiPage(id){ const list = this.state.aiPages.filter(x=>x.id!==id);
+    const active = this.state.activeAiPage && this.state.activeAiPage.id===id ? null : this.state.activeAiPage;
+    this.setState({ aiPages:list, activeAiPage:active }); this.persistAiPages(list); this.showToast('Page removed'); }
+
+  // ---------- landing A/B ----------
+  generateVariant = () => {
+    const prompt = this.state.landingPrompt.trim();
+    if(!prompt){ this.showToast('Describe the change to test first'); return; }
+    const summary = prompt.length>90 ? prompt.slice(0,87)+'…' : prompt;
+    this.setState({ landingVariant:{ summary, prompt, createdAt:new Date().toISOString() }, landingPublished:false });
+    this.showToast('Variant B generated with Claude');
+  };
+  regenVariant = () => { this.setState({ landingVariant:null, landingPublished:false }); };
+  publishLanding = () => {
+    if(!this.state.landingVariant){ this.showToast('Generate variant B first'); return; }
+    this.setState({ landingPublished:true }); this.showToast('Variant B queued to Shopify draft theme');
+  };
+  launchLanding = () => {
+    if(!this.state.landingVariant){ this.showToast('Generate variant B first'); return; }
+    this.showToast('Test queued — starts once Shopify + GA4 report exposure');
+  };
+
+  // ---------- ad A/B ----------
+  createAdTest = () => {
+    const s = this.state;
+    if(!s.adAHeadline.trim() && !s.adBHeadline.trim()){ this.setState({ adErr:'Give at least variant A and B a headline.' }); return; }
+    const name = (s.adAHeadline.trim() || s.adObjective)+' · A/B';
+    const t = { id:Date.now(), name, platform:s.adPlatform, objective:s.adObjective, variable:s.adVariable,
+      budget:(s.adBudget||'—'), split:s.adSplit, status:'Queued' };
+    const list = [t, ...s.adTests];
+    this.setState({ adTests:list, adErr:'', adAHeadline:'', adABody:'', adBHeadline:'', adBBody:'', adBudget:'' });
+    this.persistAdTests(list); this.showToast('Ad test queued — awaiting platform connection');
+  };
+  removeAdTest(id){ const list = this.state.adTests.filter(t=>t.id!==id);
+    this.setState({ adTests:list }); this.persistAdTests(list); this.showToast('Ad test deleted'); }
+
+  // ---------- customer types ----------
+  createType = () => {
+    const s = this.state;
+    if(!s.typeName.trim()){ this.setState({ typeErr:'Name the customer type.' }); return; }
+    const hues=[210,150,25,280,45,330,190,95,0,260,120,300];
+    const t = { id:Date.now(), label:s.typeName.trim(), kind:s.typeKind, rule:s.typeRule.trim(), hue:hues[this.state.customTypes.length%hues.length] };
+    const list = [...s.customTypes, t];
+    this.setState({ customTypes:list, showTypeModal:false, typeName:'', typeRule:'', typeErr:'' });
+    this.persistTypes(list); this.showToast('Customer type added');
+  };
+
+  renderVals(){
+    const A = this.props.accentColor || '#1f5fd0';
+    const NAVY = '#0d2149';
+    const ds = this.props.dataState || 'disconnected';
+    const set = (patch)=>()=>this.setState(patch);
+    const v = this.state.view;
+    const connected = this.state.connected;
+    const srcOn = this.state.srcOn;
+    const tz = this.state.timezone || 'America/Toronto';
+    let lastSyncText = 'never';
+    if(this.state.lastSync){ try { lastSyncText = new Date(this.state.lastSync).toLocaleString('en-CA',{ timeZone:tz, hour12:false }); } catch(e){ lastSyncText = new Date(this.state.lastSync).toLocaleString('en-CA',{ hour12:false }); } }
+
+    // ---- sidebar nav ----
+    const navRaw = [
+      ['Growth','exec','Executive'],
+      ['Acquisition','marketing','Marketing performance'],
+      [null,'funnel','Website funnel'],
+      ['Customers','cohorts','Cohort analysis'],
+      [null,'segments','Customer types'],
+      [null,'sample','Sample program'],
+      ['Catalog','product','Product profitability'],
+      ['Experiment','experiments','Experiments'],
+      [null,'landing','Landing page A/B'],
+      [null,'adtests','Ad A/B tests'],
+      [null,'reco','Recommendations'],
+      ['Build','builder','Dashboard builder'],
+      [null,'aipages','AI page builder'],
+      ['System','quality','Data-quality center'],
+      [null,'settings','Settings'],
+    ];
+    const nav = navRaw.map(([group,id,label])=>{
+      const active = v===id;
+      return { group, showHeader:!!group, label, onClick:set({view:id}),
+        dot: active ? A : '#c2cbd9',
+        style:`display:flex;align-items:center;gap:9px;width:calc(100% - 16px);margin:1px 8px;padding:8px 11px;border:none;text-align:left;border-radius:7px;cursor:pointer;font:${active?600:500} 12.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:${active?NAVY:'#5b6b85'};background:${active?A+'14':'transparent'};border-left:2px solid ${active?A:'transparent'}` };
+    });
+
+    // ---- date range pills ----
+    const rangeRaw = [['today','Today'],['7d','7d'],['30d','30d'],['mtd','MTD'],['qtd','QTD'],['ytd','YTD'],['custom','Custom']];
+    const rangeLabels = {today:'Today',['7d']:'Last 7 days',['30d']:'Last 30 days',mtd:'Month to date',qtd:'Quarter to date',ytd:'Year to date',custom:'Custom range'};
+    const ranges = rangeRaw.map(([id,label])=>{ const active = this.state.range===id;
+      return { label, onClick:set({range:id}),
+        style:`border:none;cursor:pointer;padding:5px 10px;border-radius:5px;font:600 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:${active?'#fff':'#5b6b85'};background:${active?A:'transparent'}` }; });
+    const isCustomRange = this.state.range==='custom';
+    let rangeLabel = rangeLabels[this.state.range];
+    if(isCustomRange && this.state.customFrom && this.state.customTo) rangeLabel = this.state.customFrom+' → '+this.state.customTo;
+
+    const curBtn = (cur)=>{ const active=this.state.currency===cur; return `border:none;cursor:pointer;padding:5px 11px;border-radius:5px;font:600 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:${active?'#fff':'#5b6b85'};background:${active?A:'transparent'}`; };
+    const setCurrency = (cur)=>()=>this.setState({ currency:cur }, ()=>this.persistSettings());
+
+    // ---- exec KPIs ----
+    const T = this.state.targets;
+    const execKpis = [
+      ['Total revenue','Shopify net sales + shipping revenue + taxes. Never platform conversion value.','$0/mo'],
+      ['Gross profit','Net product rev − COGS − freight − duties − fees − fulfilment − ship subsidy','—'],
+      ['Gross profit %','Gross profit ÷ net revenue × 100','≥ '+T.margin+'%'],
+      ['Contribution profit','Gross profit − ad spend − commissions − variable acquisition cost','—'],
+      ['Operating profit','Contribution profit − payroll − rent − software − G&A','—'],
+      ['Total ad spend','Google Ads + Meta + other paid media','—'],
+      ['Blended ROAS','Shopify net revenue ÷ total advertising spend','≥ '+T.roas+'×'],
+      ['Gross-profit ROAS','Gross profit from attributed orders ÷ ad spend','≥ '+T.gproas+'×'],
+      ['Paid CAC','Acquisition spend ÷ new customers attributed to paid','≤ $'+T.cac],
+      ['Blended CAC','Total sales & marketing expense ÷ total new customers','≤ $140'],
+      ['New customers','Distinct customers placing their first order','—'],
+      ['AOV','Net order revenue ÷ valid orders','—'],
+      ['Conversion rate','Shopify valid orders ÷ GA4 eligible sessions','≥ 1.8%'],
+      ['Gross-profit CLTV','Cumulative gross profit per acquisition cohort','—'],
+      ['LTV : CAC','Cohort GP-CLTV ÷ cohort paid CAC','≥ 3.0'],
+      ['CSAT','Responses satisfied or very satisfied ÷ valid responses','≥ '+T.csat+'%'],
+      ['NPS','% promoters − % detractors','—'],
+      ['Must-have score','% answering "very disappointed" without the product','≥ '+T.musthave+'%'],
+    ].map(([label,def,target])=>({label,def,target}));
+    const awaitLabel = (this.state.syncing || ds==='syncing') ? 'Syncing' : 'No data';
+    const awaitBadge = "font:500 10px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#c1841a;background:#fdf4e3;border:1px solid #f2e0b8;padding:2px 6px;border-radius:4px";
+
+    const reconRows = ['Shopify orders','GA4 purchases','Google Ads conversions','Meta purchases','Internal attributed'];
+
+    // ---- marketing drill ----
+    const crumbLabels = ['Channel','Account','Campaign','Ad set / group','Ad','Creative'];
+    const drill = this.state.drill;
+    const crumbs = crumbLabels.map((label,i)=>({label, onClick:set({drill:i}),
+      style:`border:none;cursor:pointer;padding:4px 9px;border-radius:5px;font:600 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;${i===drill?`color:#fff;background:${A}`:'color:#5b6b85;background:#fff;border:1px solid #e5e5ea'}`}));
+    const drillNouns = ['channels','accounts','campaigns','ad sets','ads','creatives'];
+    const drillNoun = drillNouns[drill];
+    const mktColRaw = [crumbLabels[drill],'Spend','Revenue','Gross profit','ROAS','GP-ROAS','CAC','New cust.','Conv %','AOV'];
+    const th = (i)=>`padding:10px 14px;font:600 9.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#8a97ad;${i===0?'text-align:left':'text-align:right'}`;
+    const mktCols = mktColRaw.map((label,i)=>({label,style:th(i)}));
+
+    const skelRows = [1,.82,.66,.5,.38,.28,.2];
+    const nine = [0,0,0,0,0,0,0,0,0];
+
+    // ---- funnel ----
+    const funnelStages = [
+      ['Ad click','96%','—'],['Landing-page session','82%','—'],['Product view','64%','—'],
+      ['Sample request','44%','—'],['Add to cart','32%','—'],['Checkout started','22%','—'],
+      ['Purchase','13%','—'],['Repeat purchase','6%','—'],
+    ].map(([label,w,drop])=>({label,w,drop}));
+    const pill = (active)=>`cursor:pointer;padding:6px 12px;border-radius:6px;font:600 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;${active?`border:1px solid ${A};color:#fff;background:${A}`:'border:1px solid #e5e5ea;color:#5b6b85;background:#fff'}`;
+    const funnelBreak = ['Channel','Campaign','Device','Segment','Landing page'].map((label,i)=>({label, onClick:set({funnelDim:i}), style:pill(i===this.state.funnelDim)}));
+
+    // ---- cohorts ----
+    const cohortDims = ['First-order month','Channel','Campaign','Segment','First product','Sample vs. non-sample'].map((label,i)=>({label, onClick:set({cohortDim:i}), style:pill(i===this.state.cohortDim)}));
+    const cohortColRaw = ['Cohort','Customers','CAC','30d','60d','90d','180d','365d','GP-CLTV','Payback'];
+    const cohortCols = cohortColRaw.map((label,i)=>({label,style:th(i)}));
+
+    // ---- customer types / segments ----
+    const baseSegs = [
+      ['Interior designer','Trade',210],['Architect','Trade',150],['Restoration contractor','Trade',25],
+      ['Custom home builder','Trade',280],['Tile contractor','Trade',45],['Flooring contractor','Trade',330],
+      ['Commercial builder','Trade',190],['Property manager','Trade',95],['Homeowner','Consumer',0],['Unknown','Consumer',220]
+    ];
+    const kindTag = (kind)=> kind==='Trade' ? { color:'#1f5fd0', bg:'#eaf1fd' } : { color:'#7a5db0', bg:'#f0ecfa' };
+    const segments = [
+      ...baseSegs.map(([label,kind,hue])=>({label,kind,dot:`oklch(0.62 0.13 ${hue})`,kindColor:kindTag(kind).color,kindBg:kindTag(kind).bg})),
+      ...this.state.customTypes.map(t=>({label:t.label,kind:t.kind,dot:`oklch(0.62 0.13 ${t.hue})`,kindColor:kindTag(t.kind).color,kindBg:kindTag(t.kind).bg})),
+    ];
+    const segMetrics = ['Customers','CAC','AOV','Gross margin','CLTV'];
+    const typeRules = [['Survey answer','#1f5fd0'],['Trade account tag','#1f9d6b'],['Order-value band','#c1841a'],['Email domain','#7a5db0']].map(([label,dot])=>({label,dot}));
+
+    // ---- sample ----
+    const sampleKpis = ['Sample requests','Cost / qualified request','Sample-to-order conv.','Days to order','Revenue after sample','GP after sample','Sample-to-customer CAC','Total program cost'];
+    const sampleFlow = ['Sample request','Sample shipped','First order','Repeat order'];
+
+    // ---- product ----
+    const productDims = ['Product','Vendor','Collection','Material','Segment','Geography'].map((label,i)=>({label, onClick:set({productDim:i}), style:pill(i===this.state.productDim)}));
+    const productColRaw = [['Product','Vendor','Collection','Material','Segment','Geography'][this.state.productDim],'Units','Revenue','COGS','Gross profit','Margin %','Refund %','Samples','Repeat %','Contribution'];
+    const productCols = productColRaw.map((label,i)=>({label,style:th(i)}));
+
+    // ---- experiments ----
+    const exps = this.state.experiments;
+    const statusMeta = [['Draft','#8a97ad'],['Awaiting approval','#c1841a'],['Scheduled','#1f5fd0'],['Running','#1f9d6b'],['Paused','#c1841a'],['Completed','#5b6b85'],['Inconclusive','#8a97ad'],['Implemented','#1f9d6b']];
+    const statusDot = Object.fromEntries(statusMeta);
+    const filter = this.state.expFilter;
+    const expStatuses = [['All','#5b6b85'],...statusMeta].map(([label,dot])=>{
+      const count = label==='All' ? exps.length : exps.filter(e=>e.status===label).length;
+      const active = filter===label;
+      return { label, dot, count, onClick:set({expFilter:label}),
+        style:`display:flex;align-items:center;gap:6px;cursor:pointer;padding:5px 10px;background:${active?A+'14':'#fff'};border:1px solid ${active?A:'#e5e5ea'};border-radius:20px;font:600 10px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:${active?NAVY:'#5b6b85'}` };
+    });
+    const nextStatus = { 'Draft':'Awaiting approval','Awaiting approval':'Scheduled','Scheduled':'Running','Running':'Completed','Paused':'Running','Completed':'Implemented' };
+    const advanceVerb = { 'Draft':'Submit for approval','Awaiting approval':'Approve & schedule','Scheduled':'Start','Running':'Complete','Paused':'Resume','Completed':'Mark implemented' };
+    const visibleExps = filter==='All' ? exps : exps.filter(e=>e.status===filter);
+    const expCards = visibleExps.map(x=>({
+      name:x.name, hypothesis:x.hypothesis, type:x.type, status:x.status,
+      metric:x.metric, guardrail:x.guardrail, mde:x.mde, traffic:x.traffic,
+      dot: statusDot[x.status]||'#8a97ad',
+      canAdvance: !!nextStatus[x.status], advanceLabel: advanceVerb[x.status]||'Advance',
+      advance: ()=>this.setExpStatus(x.id, nextStatus[x.status]),
+      canPause: x.status==='Running', pause: ()=>this.setExpStatus(x.id,'Paused'),
+      remove: ()=>this.removeExperiment(x.id),
+    }));
+    const hasExperiments = visibleExps.length>0;
+    const noExperiments = visibleExps.length===0;
+    const expEmptyTitle = exps.length===0 ? 'No experiments yet' : 'No experiments in "'+filter+'"';
+    const trafficOptions = [10,25,50,100].map(n=>({label:n+'%', onClick:set({expTraffic:n}),
+      style:`cursor:pointer;padding:6px 12px;border-radius:6px;font:600 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;${n===this.state.expTraffic?`border:1px solid ${A};color:#fff;background:${A}`:'border:1px solid #e5e5ea;color:#5b6b85;background:#fff'}`}));
+
+    // ---- recommendations ----
+    const priorities = [['Critical','#cf5b52'],['High','#c1841a'],['Medium','#1f5fd0'],['Low','#8a97ad']].map(([label,dot])=>({label,dot}));
+
+    // ---- builder ----
+    const widgetTypeNames = ['KPI card','Time series','Bar chart','Stacked bar','Area chart','Funnel','Table','Pivot table','Cohort table','Scatterplot','Heat map','Donut','Target gauge','Waterfall','Text block','Experiment card'];
+    const widgetTypes = widgetTypeNames.map(label=>({ label,
+      onDragStart:(e)=>{ try{ e.dataTransfer.setData('text/plain', label); e.dataTransfer.effectAllowed='copy'; }catch(err){} this.setState({ drag:{kind:'new', type:label} }); },
+      onClick:()=>this.addWidget(label) }));
+    const widgets = this.state.widgets;
+    const selId = this.state.selId;
+    const canvasWidgets = widgets.map(w=>{
+      const selected = w.id===selId;
+      return { title:w.title, typeLabel:w.type, metric:w.metric, rangeLabel:w.range==='Inherit dashboard'?rangeLabel:w.range,
+        onClick:(e)=>{ e.stopPropagation(); this.setState({ selId:w.id }); },
+        onDragStart:(e)=>{ try{ e.dataTransfer.setData('text/plain','move'); e.dataTransfer.effectAllowed='move'; }catch(err){} this.setState({ drag:{kind:'move', id:w.id} }); },
+        onDragOver:(e)=>{ e.preventDefault(); },
+        onDrop:(e)=>{ e.preventDefault(); e.stopPropagation();
+          const d=this.state.drag;
+          if(d&&d.kind==='move') this.moveWidget(d.id, w.id);
+          else if(d&&d.kind==='new'){ this.addWidget(d.type); }
+          this.setState({ drag:null }); },
+        style:`grid-column:span ${Math.min(12,Math.max(3,w.span))};display:flex;flex-direction:column;min-height:128px;padding:12px 13px;background:#fff;border:1px solid ${selected?A:'#e5e5ea'};border-radius:18px;cursor:grab;${selected?`box-shadow:0 0 0 1px ${A}55`:''}`,
+      };
+    });
+    const canvasEmpty = widgets.length===0;
+    const canvasStyle = `background:#f5f5f7;border:1.5px dashed ${this.state.drag?A:'#d4dce8'};border-radius:18px;padding:12px;display:grid;grid-template-columns:repeat(12,1fr);gap:10px;align-content:start;min-height:520px`;
+    const canvasDragOver = (e)=>{ e.preventDefault(); };
+    const canvasDrop = (e)=>{ e.preventDefault();
+      const d=this.state.drag;
+      if(d&&d.kind==='new') this.addWidget(d.type);
+      else if(d&&d.kind==='move'){ const list=[...this.state.widgets]; const fi=list.findIndex(x=>x.id===d.id);
+        if(fi>=0){ const [m]=list.splice(fi,1); list.push(m); this.setState({widgets:list}); this.persistWidgets(list); } }
+      this.setState({ drag:null }); };
+    const sel = widgets.find(w=>w.id===selId) || null;
+    const metricOptions = this.metricDictionary();
+    const dimOptions = ['None','Channel','Campaign','Device','Customer type','Product','Landing page','Geography'];
+    const rangeOptions = ['Inherit dashboard','Today','Last 7 days','Last 30 days','Month to date','Quarter to date','Year to date','Custom'];
+    const attrOptions = ['Shopify-verified','Platform-reported','Last non-direct click','First click','Linear','UTM deterministic'];
+    const formatOptions = ['Currency','Number','Percent','Ratio'];
+    const guardrailOptions = ['Gross margin','Refund rate','Bounce rate','Checkout completion','CSAT','Revenue per user','Page speed','Average discount'];
+    const cfgLabel = "font:600 9.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#8a97ad;margin-bottom:5px";
+    const cfgInput = "width:100%;padding:8px 10px;background:#fff;border:1px solid #dcdce1;border-radius:6px;color:#0f1b34;font:500 11.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;outline:none";
+    const promptArea = "width:100%;padding:10px 12px;background:#fff;border:1px solid #dcdce1;border-radius:8px;color:#0f1b34;font:500 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;outline:none;resize:vertical;line-height:1.5";
+    const chip = "cursor:pointer;padding:5px 10px;border-radius:16px;border:1px solid #e5e5ea;background:#fff;color:#5b6b85;font:600 10.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif";
+
+    // ---- AI page builder vals ----
+    const active = this.state.activeAiPage;
+    const hasAiPage = !!active;
+    const noAiPage = !active;
+    const aiIdeas = [
+      'Blended vs GP-ROAS by channel','New customers by customer type','Sample-to-order funnel','Refund rate by product',
+    ].map(label=>({ label, onClick:()=>this.setState({ aiPrompt:label }) }));
+    const aiPageList = this.state.aiPages.map(p=>({
+      title:p.title, meta:(p.metrics.length)+' metrics · '+p.range,
+      onClick:()=>this.openAiPage(p.id),
+      remove:(e)=>{ e.stopPropagation(); this.removeAiPage(p.id); },
+      style:"display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 11px;margin-bottom:6px;background:#f5f5f7;border:1px solid #f0f0f3;border-radius:8px;cursor:pointer",
+    }));
+    const aiMetricCards = active ? active.metrics.map(m=>({label:m})) : [];
+    const aiBreakdownRows = [0,0,0,0,0];
+
+    // ---- landing A/B vals ----
+    const storePages = ['/','/collections/porcelain-tile','/collections/marble','/products/carrara-subway-3x6','/products/hexagon-matte-white','/pages/order-samples','/pages/trade-program'];
+    const landingTypes = ['Single variable','Multivariant','Incremental'].map(label=>({ label, onClick:set({landingType:label}),
+      style:`cursor:pointer;padding:7px 13px;border-radius:6px;font:600 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;${label===this.state.landingType?`border:1px solid ${A};color:#fff;background:${A}`:'border:1px solid #e5e5ea;color:#5b6b85;background:#fff'}`}));
+    const landingIdeas = [
+      'Move sample CTA above the fold','Add trade-pricing badge','Shorten hero, add trust row',
+    ].map(label=>({ label, onClick:()=>this.setState({ landingPrompt:label }) }));
+    const lv = this.state.landingVariant;
+    const splitOptions = ['50 / 50','70 / 30','90 / 10'].map(label=>({ label, onClick:set({landingSplit:label}),
+      style:`cursor:pointer;padding:7px 11px;border-radius:6px;font:600 10.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;${label===this.state.landingSplit?`border:1px solid ${A};color:#fff;background:${A}`:'border:1px solid #e5e5ea;color:#5b6b85;background:#fff'}`}));
+    const landingMetricOptions = ['Conversion rate','Gross-profit ROAS','Revenue per session','Sample-to-order conv.'];
+    const runtimeOptions = ['7 days','14 days','21 days','Until significant'];
+    const browserFrame = "height:300px;background:#fff;display:flex;flex-direction:column";
+    const browserBar = "display:flex;align-items:center;gap:6px;padding:9px 12px;border-bottom:1px solid #f0f0f3;background:#fbfcfe";
+    const stripe = "repeating-linear-gradient(45deg,#f2f5fa,#f2f5fa 10px,#f0f0f3 10px,#f0f0f3 20px)";
+    const pagePlaceholder = `flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;background:${stripe}`;
+    const pagePlaceholderB = `flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;background:repeating-linear-gradient(45deg,#eef4fd,#eef4fd 10px,#e5eefb 10px,#e5eefb 20px);padding:20px`;
+    const publishStatus = this.state.landingPublished ? 'Published to Shopify draft theme — awaiting sync' : (lv ? 'Variant ready — not published' : 'No variant generated');
+    const publishDot = this.state.landingPublished ? '#1f9d6b' : (lv ? '#c1841a' : '#c2cbd9');
+    const publishColor = this.state.landingPublished ? '#1f9d6b' : (lv ? '#c1841a' : '#8a97ad');
+    const landingResultRows = [{label:'Control · A',dot:NAVY},{label:'Variant · B',dot:A}];
+
+    // ---- ad A/B vals ----
+    const adPlatforms = ['Google Ads','Meta Ads','Both'].map(label=>({ label, onClick:set({adPlatform:label}),
+      style:`cursor:pointer;padding:7px 12px;border-radius:6px;font:600 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;${label===this.state.adPlatform?`border:1px solid ${A};color:#fff;background:${A}`:'border:1px solid #e5e5ea;color:#5b6b85;background:#fff'}`}));
+    const adObjectives = ['Conversions','Sample requests','Catalog sales','Traffic'];
+    const adVariables = ['Creative','Headline','Audience','Landing page','Offer'];
+    const adSplitOptions = ['50 / 50','70 / 30','80 / 20'].map(label=>({ label, onClick:set({adSplit:label}),
+      style:`cursor:pointer;padding:7px 10px;border-radius:6px;font:600 10.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;${label===this.state.adSplit?`border:1px solid ${A};color:#fff;background:${A}`:'border:1px solid #e5e5ea;color:#5b6b85;background:#fff'}`}));
+    const creativeSlot = `margin-top:8px;height:56px;border-radius:6px;border:1px dashed #d4dce8;display:flex;align-items:center;justify-content:center;font:500 9.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#aab4c6;background:${stripe}`;
+    const creativeSlotB = `margin-top:8px;height:56px;border-radius:6px;border:1px dashed ${A}66;display:flex;align-items:center;justify-content:center;font:500 9.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:${A};background:repeating-linear-gradient(45deg,#eef4fd,#eef4fd 8px,#e5eefb 8px,#e5eefb 16px)`;
+    const adTestCards = this.state.adTests.map(t=>({ name:t.name, platform:t.platform, variable:t.variable, budget:t.budget, split:t.split, status:t.status,
+      remove:()=>this.removeAdTest(t.id) }));
+
+    // ---- data quality ----
+    const okBadge = "font:600 10px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#fff;background:#1f9d6b;padding:3px 8px;border-radius:4px";
+    const noBadge = "font:600 10px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#cf5b52;background:#fdecea;border:1px solid #f4cfca;padding:3px 8px;border-radius:4px";
+    const srcMeta = [['google-ads','Google Ads'],['meta-ads','Meta Ads'],['ga4','Google Analytics 4'],['shopify','Shopify'],['supermetrics','Supermetrics'],['surveys','Surveys / CSAT']];
+    const isOn = (id)=> id==='supermetrics' ? connected : (id==='surveys' ? false : (!!srcOn[id] && connected));
+    const sources = srcMeta.map(([id,label])=>{
+      const on = isOn(id);
+      const rows = (id==='supermetrics' && on && this.state.lastRows!=null) ? String(this.state.lastRows) : '0';
+      return { label, statusLabel: on?'Connected':'Not connected', statusStyle: on?okBadge:noBadge, lastSync: on?lastSyncText:'never', lastSyncColor: on?'#1f9d6b':'#8a97ad', rows };
+    });
+    const setupCount = srcMeta.filter(([id])=>isOn(id)).length;
+    const setupPct = Math.round(setupCount/6*100)+'%';
+    const validations = ['Duplicate orders','Missing order IDs','Missing campaign IDs','Negative spend','Revenue without orders','Invalid currencies','Missing COGS','Unmapped sources','Date gaps','Extreme day-over-day change','Platform CV > Shopify revenue'];
+    const validationState = connected ? 'Queued' : 'Idle';
+    const reconLines = [
+      ['Shopify gross sales','#0d2149'],['− Discounts','#5b6b85'],['− Returns & refunds','#5b6b85'],
+      ['+ Shipping revenue','#5b6b85'],['+ Taxes','#5b6b85'],['= Total Shopify revenue','#0d2149'],
+    ].map(([label,color])=>({label,color}));
+    const thL = `padding:10px 14px;text-align:left;font:600 9.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#8a97ad`;
+    const thR = `padding:10px 14px;text-align:right;font:600 9.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;letter-spacing:0;color:#8a97ad`;
+
+    // ---- shared button + chart styles ----
+    const primaryBtn = `border:none;cursor:pointer;padding:8px 17px;border-radius:980px;font:600 12.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#fff;background:${A};transition:filter .15s`;
+    const ghostBtn = `cursor:pointer;padding:8px 17px;border-radius:980px;font:600 12.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:${A};background:#f0f0f3;border:none`;
+    const ghostBtnSm = `cursor:pointer;padding:6px 13px;border-radius:980px;font:600 11.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:${A};background:#f0f0f3;border:none`;
+    const dangerBtnSm = `cursor:pointer;padding:6px 13px;border-radius:980px;font:600 11.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#d1453b;background:#f0f0f3;border:none`;
+    const chartFrame = `position:relative;height:230px;border-radius:8px;background-color:#fbfcfe;background-image:linear-gradient(#f0f0f3 1px,transparent 1px),linear-gradient(90deg,#f2f5fa 1px,transparent 1px);background-size:100% 25%,12.5% 100%;border:1px solid #f0f0f3`;
+    const chartOverlay = `position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center`;
+    const dateInputStyle = "padding:2px 6px;background:#fff;border:1px solid #dcdce1;border-radius:5px;color:#0f1b34;font:500 10.5px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;outline:none";
+
+    // ---- connection UI ----
+    const connText = connected ? 'Supermetrics · connected' : 'Supermetrics · not connected';
+    const connDot = connected ? '#1f9d6b' : '#cf5b52';
+    const connTextColor = connected ? '#1f9d6b' : '#c0473f';
+    const connPillStyle = connected
+      ? "display:flex;align-items:center;gap:7px;padding:6px 11px;background:#ecfaf2;border:1px solid #bde8ce;border-radius:7px;cursor:pointer"
+      : "display:flex;align-items:center;gap:7px;padding:6px 11px;background:#fdecea;border:1px solid #f4cfca;border-radius:7px;cursor:pointer";
+    const confidenceLabel = connected ? 'Partial' : 'Unreliable';
+    const confidenceColor = connected ? '#c1841a' : '#cf5b52';
+    const metaSyncColor = connected ? '#1f9d6b' : '#c0473f';
+    const inputStyle = "width:100%;padding:9px 11px;background:#fff;border:1px solid #dcdce1;border-radius:7px;color:#0f1b34;font:500 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;outline:none";
+    const srcToggleRaw = [['google-ads','Google Ads'],['meta-ads','Meta Ads'],['ga4','Google Analytics 4'],['shopify','Shopify']];
+    const srcToggles = srcToggleRaw.map(([id,label])=>{
+      const on = !!srcOn[id];
+      return { label, onClick:()=>this.setState(st=>({ srcOn:{ ...st.srcOn, [id]:!st.srcOn[id] } }), ()=>this.persistConn()),
+        style:`display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:7px;cursor:pointer;font:500 12px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:${on?NAVY:'#8a97ad'};background:${on?A+'12':'#fff'};border:1px solid ${on?A:'#dcdce1'}`,
+        dot: on?A:'#c2cbd9' };
+    });
+    const statusColor = { idle:'#5b6b85', testing:'#1f5fd0', ok:'#1f9d6b', error:'#cf5b52' }[this.state.status] || '#5b6b85';
+
+    // ---- settings ----
+    const tzOptions = ['America/Toronto','America/New_York','America/Vancouver','America/Chicago','UTC'];
+    const targetDefs = [['roas','Blended ROAS target (×)','4.0'],['gproas','Gross-profit ROAS target (×)','1.8'],['cac','Paid CAC ceiling ($)','180'],['margin','Gross margin target (%)','55'],['csat','CSAT target (%)','90'],['musthave','Must-have score target (%)','40']];
+    const targetFields = targetDefs.map(([key,label,ph])=>({ label, ph, value:T[key]||'',
+      onInput:(e)=>this.setState(st=>({ targets:{ ...st.targets, [key]:e.target.value } })) }));
+    const setBtn = (active2)=>`cursor:pointer;padding:7px 14px;border-radius:6px;font:600 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;${active2?`border:1px solid ${A};color:#fff;background:${A}`:'border:1px solid #dcdce1;color:#5b6b85;background:#fff'}`;
+
+    const exportPdf = ()=>{ try { window.print(); this.showToast('Print dialog opened — choose "Save as PDF"'); } catch(e){ this.showToast('Printing is blocked in this preview'); } };
+
+    return {
+      accent:A, navy:NAVY, nav, ranges, rangeLabel, currency:this.state.currency,
+      isCustomRange, customFrom:this.state.customFrom, customTo:this.state.customTo,
+      setCustomFrom:(e)=>this.setState({ customFrom:e.target.value }),
+      setCustomTo:(e)=>this.setState({ customTo:e.target.value }),
+      dateInputStyle,
+      compareMeta:this.state.compare?'Previous period':'Off',
+      compareWord:this.state.compare?'on':'off', compareDot:this.state.compare?A:'#c2cbd9',
+      compareStyle:`display:flex;align-items:center;gap:7px;cursor:pointer;padding:6px 11px;border-radius:7px;font:600 11px -apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;color:#5b6b85;background:#fff;border:1px solid #e5e5ea`,
+      toggleCompare:()=>this.setState(s=>({compare:!s.compare}), ()=>this.persistSettings()),
+      setCAD:setCurrency('CAD'), setUSD:setCurrency('USD'),
+      cadStyle:curBtn('CAD'), usdStyle:curBtn('USD'),
+      timezone:this.state.timezone,
+      isExec:v==='exec', isMarketing:v==='marketing', isFunnel:v==='funnel', isCohorts:v==='cohorts',
+      isSegments:v==='segments', isSample:v==='sample', isProduct:v==='product',
+      isExperiments:v==='experiments', isReco:v==='reco', isBuilder:v==='builder', isQuality:v==='quality',
+      isSettings:v==='settings', isLanding:v==='landing', isAdtests:v==='adtests', isAipages:v==='aipages',
+      execKpis, awaitLabel, awaitBadge, reconRows, crumbs, drillNoun, mktCols, skelRows, nine,
+      funnelStages, funnelBreak, cohortDims, cohortCols, segments, segMetrics, typeRules,
+      sampleKpis, sampleFlow, productDims, productCols, expStatuses, priorities,
+      sources, validations, validationState, reconLines, thL, thR,
+      confidenceWord: connected?'Partial':'Unreliable',
+      primaryBtn, ghostBtn, ghostBtnSm, dangerBtnSm, chartFrame, chartOverlay,
+      cfgLabel, cfgInput, promptArea, chip, accentTint:A+'14', accentTintBorder:A+'55',
+      exportPdf,
+      // experiments
+      hasExperiments, noExperiments, expCards, expEmptyTitle,
+      showExpModal:this.state.showExpModal,
+      openExpModal:()=>this.setState({ showExpModal:true, expErr:'' }),
+      closeExpModal:()=>this.setState({ showExpModal:false }),
+      expName:this.state.expName, setExpName:(e)=>this.setState({ expName:e.target.value }),
+      expHypothesis:this.state.expHypothesis, setExpHypothesis:(e)=>this.setState({ expHypothesis:e.target.value }),
+      expType:this.state.expType, setExpType:(e)=>this.setState({ expType:e.target.value }),
+      expMetric:this.state.expMetric, setExpMetric:(e)=>this.setState({ expMetric:e.target.value }),
+      expGuardrail:this.state.expGuardrail, setExpGuardrail:(e)=>this.setState({ expGuardrail:e.target.value }),
+      expMde:this.state.expMde, setExpMde:(e)=>this.setState({ expMde:e.target.value }),
+      expTraffic:this.state.expTraffic+'%', trafficOptions, guardrailOptions,
+      expErr:this.state.expErr, createExperiment:this.createExperiment,
+      // builder
+      widgetTypes, canvasWidgets, canvasEmpty, canvasStyle, canvasDragOver, canvasDrop,
+      selWidget:!!sel, noSelWidget:!sel,
+      selTitle:sel?sel.title:'', setSelTitle:(e)=>this.patchSel({ title:e.target.value }),
+      selMetric:sel?sel.metric:'', setSelMetric:(e)=>this.patchSel({ metric:e.target.value }),
+      selDim:sel?sel.dim:'', setSelDim:(e)=>this.patchSel({ dim:e.target.value }),
+      selRange:sel?sel.range:'', setSelRange:(e)=>this.patchSel({ range:e.target.value }),
+      selAttr:sel?sel.attr:'', setSelAttr:(e)=>this.patchSel({ attr:e.target.value }),
+      selFormat:sel?sel.format:'', setSelFormat:(e)=>this.patchSel({ format:e.target.value }),
+      selSpan:sel?sel.span:4,
+      selNarrower:()=>sel&&this.patchSel({ span:Math.max(3,sel.span-1) }),
+      selWider:()=>sel&&this.patchSel({ span:Math.min(12,sel.span+1) }),
+      toggleSelCompare:()=>sel&&this.patchSel({ compare:!sel.compare }),
+      selCompareStyle:setBtn(!!(sel&&sel.compare)), selCompareLabel:sel&&sel.compare?'On':'Off',
+      duplicateSel:()=>{ if(!sel) return; const id=Date.now()+Math.floor(Math.random()*1e4); const list=[...widgets,{...sel,id,title:sel.title+' (copy)'}]; this.setState({widgets:list,selId:id}); this.persistWidgets(list); this.showToast('Widget duplicated'); },
+      deleteSel:()=>{ if(!sel) return; const list=widgets.filter(x=>x.id!==sel.id); this.setState({widgets:list,selId:null}); this.persistWidgets(list); this.showToast('Widget deleted'); },
+      saveLayout:()=>{ this.persistWidgets(widgets); this.showToast('Layout saved'); },
+      clearLayout:()=>{ this.setState({widgets:[],selId:null}); this.persistWidgets([]); this.showToast('Layout cleared'); },
+      metricOptions, dimOptions, rangeOptions, attrOptions, formatOptions,
+      // AI page builder
+      aiPrompt:this.state.aiPrompt, setAiPrompt:(e)=>this.setState({ aiPrompt:e.target.value }),
+      aiIdeas, generateAiPage:this.generateAiPage,
+      aiPageList, aiPageCount:this.state.aiPages.length, noAiPages:this.state.aiPages.length===0,
+      hasAiPage, noAiPage, saveAiPage:this.saveAiPage, discardAiPage:this.discardAiPage,
+      aiPreviewTitle: active ? active.title : 'Page preview',
+      aiPromptEcho: active ? active.prompt : '',
+      aiMetricCards, aiChartTitle: active ? (active.metrics[0]+' · daily') : '',
+      aiDim: active ? active.dim : '', aiBreakdownRows,
+      aiMetricCount: active ? active.metrics.length : 0, aiRangeEcho: active ? active.range : '',
+      // landing A/B
+      storePages, landingSource:this.state.landingSource, setLandingSource:(e)=>this.setState({ landingSource:e.target.value }),
+      landingTypes, landingTypeLabel:this.state.landingType,
+      landingPrompt:this.state.landingPrompt, setLandingPrompt:(e)=>this.setState({ landingPrompt:e.target.value }),
+      landingIdeas, generateVariant:this.generateVariant, regenVariant:this.regenVariant,
+      hasVariant:!!lv, noVariant:!lv,
+      variantHeading: lv ? 'AI-generated variant' : 'Describe & generate',
+      variantSummary: lv ? lv.summary : '',
+      variantBorder: lv ? A+'55' : '#e5e5ea',
+      browserFrame, browserBar, pagePlaceholder, pagePlaceholderB,
+      splitOptions, landingMetric:this.state.landingMetric, setLandingMetric:(e)=>this.setState({ landingMetric:e.target.value }), landingMetricOptions,
+      landingGuardrail:this.state.landingGuardrail, setLandingGuardrail:(e)=>this.setState({ landingGuardrail:e.target.value }),
+      landingRuntime:this.state.landingRuntime, setLandingRuntime:(e)=>this.setState({ landingRuntime:e.target.value }), runtimeOptions,
+      publishStatus, publishDot, publishColor, publishDisabled: lv?'':'opacity:.55;pointer-events:none',
+      publishLanding:this.publishLanding, launchLanding:this.launchLanding, landingResultRows,
+      // ad A/B
+      adPlatforms, adObjective:this.state.adObjective, setAdObjective:(e)=>this.setState({ adObjective:e.target.value }), adObjectives,
+      adVariable:this.state.adVariable, setAdVariable:(e)=>this.setState({ adVariable:e.target.value }), adVariables,
+      adAHeadline:this.state.adAHeadline, setAdAHeadline:(e)=>this.setState({ adAHeadline:e.target.value }),
+      adABody:this.state.adABody, setAdABody:(e)=>this.setState({ adABody:e.target.value }),
+      adBHeadline:this.state.adBHeadline, setAdBHeadline:(e)=>this.setState({ adBHeadline:e.target.value }),
+      adBBody:this.state.adBBody, setAdBBody:(e)=>this.setState({ adBBody:e.target.value }),
+      adBudget:this.state.adBudget, setAdBudget:(e)=>this.setState({ adBudget:e.target.value }),
+      adSplitOptions, creativeSlot, creativeSlotB, adErr:this.state.adErr, createAdTest:this.createAdTest,
+      adTestCards, adTestCount:this.state.adTests.length, noAdTests:this.state.adTests.length===0,
+      // customer types
+      showTypeModal:this.state.showTypeModal,
+      openTypeModal:()=>this.setState({ showTypeModal:true, typeErr:'' }),
+      closeTypeModal:()=>this.setState({ showTypeModal:false }),
+      typeName:this.state.typeName, setTypeName:(e)=>this.setState({ typeName:e.target.value }),
+      typeKind:this.state.typeKind, setTypeKind:(e)=>this.setState({ typeKind:e.target.value }),
+      typeRule:this.state.typeRule, setTypeRule:(e)=>this.setState({ typeRule:e.target.value }),
+      typeErr:this.state.typeErr, createType:this.createType,
+      // connector
+      showConnect:this.state.showConnect,
+      openConnect:()=>this.setState({ showConnect:true, status:'idle', msg:'' }),
+      closeConnect:()=>this.setState({ showConnect:false }),
+      stop:(e)=>e.stopPropagation(),
+      endpoint:this.state.endpoint, apiKey:this.state.apiKey,
+      setEndpoint:(e)=>this.setState({ endpoint:e.target.value }),
+      setApiKey:(e)=>this.setState({ apiKey:e.target.value }),
+      testConnection:this.testConnection, saveClose:this.saveClose,
+      syncNow:this.syncNow, disconnect:this.disconnect,
+      syncBtnLabel:this.state.syncing?'Syncing…':(connected?'Sync now':'Connect a source'),
+      srcToggles, inputStyle, statusMsg:this.state.msg, statusColor,
+      connText, connDot, connTextColor, connPillStyle, connected, notConnected:!connected,
+      confidenceLabel, confidenceColor, lastSyncText, metaSyncColor,
+      setupCount, setupPct,
+      // settings
+      tzOptions, setTimezone:(e)=>this.setState({ timezone:e.target.value }, ()=>this.persistSettings()),
+      defaultRange:this.state.defaultRange,
+      defaultRangeOptions: rangeRaw.map(([id])=>({ id, label:rangeLabels[id] })),
+      setDefaultRange:(e)=>this.setState({ defaultRange:e.target.value, range:e.target.value }, ()=>this.persistSettings()),
+      targetFields,
+      cadSetStyle:setBtn(this.state.currency==='CAD'), usdSetStyle:setBtn(this.state.currency==='USD'),
+      compareSetStyle:setBtn(this.state.compare), compareSetLabel:this.state.compare?'On':'Off',
+      saveSettings:()=>{ this.persistSettings(); this.showToast('Settings saved'); },
+      resetAll:()=>{ try{ ['ud2_conn','ud2_settings','ud2_experiments','ud2_widgets','ud2_aipages','ud2_adtests','ud2_types'].forEach(k=>localStorage.removeItem(k)); }catch(e){}
+        this.setState({ endpoint:'', apiKey:'', connected:false, lastSync:null, lastRows:null,
+          experiments:[], widgets:[], selId:null, aiPages:[], activeAiPage:null, adTests:[], customTypes:[],
+          currency:'CAD', timezone:'America/Toronto', defaultRange:'30d', compare:true,
+          targets:{ roas:'4.0', gproas:'1.8', cac:'180', csat:'90', musthave:'40', margin:'55' } });
+        this.showToast('Local prototype data cleared'); },
+      toast:this.state.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>
