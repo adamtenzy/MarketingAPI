@@ -1,0 +1,113 @@
+<!-- @dsCard group="Pages" name="Analytics (GA4)" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Analytics — Urban District Marketing</title>
+<!-- @inject:tokens -->
+</head>
+<body>
+<div class="shell">
+  <!-- @inject:topbar analytics -->
+
+  <div class="page-head">
+    <div>
+      <h1>Analytics</h1>
+      <div class="sub">Google Analytics 4 · urbandistrict.com</div>
+    </div>
+    <div class="filters">
+      <div class="chip-row">
+        <button class="chip">Today</button>
+        <button class="chip">7D</button>
+        <button class="chip active">30D</button>
+        <button class="chip">90D</button>
+        <button class="chip">MTD</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid kpis" id="kpis"></div>
+
+  <div class="grid two">
+    <section class="card">
+      <div class="card-head">
+        <div><h2>Sessions by day</h2><div class="card-sub">Current vs previous 30 days</div></div>
+        <div class="spacer"></div><div id="sess-legend"></div>
+      </div>
+      <div id="sess-chart"></div>
+    </section>
+    <section class="card">
+      <div class="card-head">
+        <div><h2>Sessions by channel</h2><div class="card-sub">Default channel group</div></div>
+      </div>
+      <div id="channel-chart"></div>
+    </section>
+  </div>
+
+  <section class="card">
+    <div class="card-head">
+      <div><h2>Top landing pages</h2><div class="card-sub">By sessions, last 30 days</div></div>
+    </div>
+    <table class="data">
+      <thead><tr>
+        <th>Landing page</th><th class="num">Sessions</th><th class="num">Engagement rate</th>
+        <th class="num">Key events</th><th class="num">Revenue</th>
+      </tr></thead>
+      <tbody>
+        <tr><td>/</td><td class="num">21,412</td><td class="num">64.2%</td><td class="num">812</td><td class="num">$38,204</td></tr>
+        <tr><td>/collections/porcelain-tile</td><td class="num">14,388</td><td class="num">68.9%</td><td class="num">694</td><td class="num">$41,867</td></tr>
+        <tr><td>/collections/zellige</td><td class="num">9,241</td><td class="num">71.4%</td><td class="num">521</td><td class="num">$26,411</td></tr>
+        <tr><td>/products/calacatta-gold-12x24</td><td class="num">7,102</td><td class="num">66.1%</td><td class="num">438</td><td class="num">$31,224</td></tr>
+        <tr><td>/pages/trade-program</td><td class="num">4,830</td><td class="num">58.7%</td><td class="num">196</td><td class="num">$9,412</td></tr>
+        <tr><td>/blogs/inspiration/small-bathrooms</td><td class="num">3,914</td><td class="num">52.3%</td><td class="num">84</td><td class="num">$3,388</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <div class="foot">Design preview with sample data — GA4 needs a one-time Supermetrics login before Phase 2 can pull live data.</div>
+</div>
+
+<!-- @inject:charts -->
+<script>
+UD.tile(document.querySelector("#kpis").appendChild(document.createElement("div")),
+  { label: "Sessions", value: "96.2K", delta: 9.8, vs: "prior 30d",
+    sparkValues: [68,70,69,74,76,75,79,82,81,86,90,96], color: "var(--series-1)" });
+UD.tile(document.querySelector("#kpis").appendChild(document.createElement("div")),
+  { label: "Total users", value: "71.4K", delta: 8.6, vs: "prior 30d",
+    sparkValues: [52,54,53,56,58,57,60,62,61,64,67,71], color: "var(--series-1)" });
+UD.tile(document.querySelector("#kpis").appendChild(document.createElement("div")),
+  { label: "Engagement rate", value: "62.3%", delta: 1.4, vs: "prior 30d",
+    sparkValues: [60.2,60.5,60.3,60.9,61.1,60.8,61.4,61.7,61.5,61.9,62.1,62.3], color: "var(--series-1)" });
+UD.tile(document.querySelector("#kpis").appendChild(document.createElement("div")),
+  { label: "Key events", value: "3,481", delta: 11.2, vs: "prior 30d",
+    sparkValues: [242,251,248,264,272,268,281,290,286,301,312,328], color: "var(--series-1)" });
+UD.tile(document.querySelector("#kpis").appendChild(document.createElement("div")),
+  { label: "Session conversion", value: "1.93%", delta: 2.2, vs: "prior 30d",
+    sparkValues: [1.71,1.74,1.70,1.78,1.80,1.77,1.83,1.86,1.84,1.89,1.91,1.93], color: "var(--series-1)" });
+
+const days = Array.from({length: 30}, (_, i) => (i + 17 <= 30 ? "Jun " + (i + 17) : "Jul " + (i - 13)));
+const current = [2.6,2.8,2.5,3.1,3.4,3.7,3.0,2.7,3.1,3.3,4.0,4.2,3.1,2.9,3.2,3.5,3.6,4.4,4.6,3.3,3.1,3.4,3.7,3.9,4.7,5.0,3.6,3.4,3.8,4.1].map(v => v * 1000);
+const previous = current.map((v, i) => v * 0.91 - (i % 6) * 40);
+const sessSeries = [
+  { name: "Current",  color: "var(--series-1)", values: current },
+  { name: "Previous", color: "var(--baseline)", values: previous },
+];
+UD.legend(document.getElementById("sess-legend"), sessSeries);
+UD.lineChart(document.getElementById("sess-chart"),
+  { labels: days, series: sessSeries, yFmt: v => UD.fmt.compact(v) });
+
+UD.hBars(document.getElementById("channel-chart"), {
+  vFmt: v => UD.fmt.compact(v),
+  rows: [
+    { name: "Organic Search", value: 31240, color: "var(--series-1)" },
+    { name: "Paid Search",    value: 22180, color: "var(--series-2)" },
+    { name: "Paid Social",    value: 16410, color: "var(--series-3)" },
+    { name: "Direct",         value: 14820, color: "var(--series-4)" },
+    { name: "Email",          value: 6890,  color: "var(--series-5)" },
+    { name: "Referral",       value: 4660,  color: "var(--series-6)" },
+  ],
+});
+</script>
+</body>
+</html>

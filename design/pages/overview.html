@@ -1,0 +1,111 @@
+<!-- @dsCard group="Pages" name="Overview" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Overview — Urban District Marketing</title>
+<!-- @inject:tokens -->
+</head>
+<body>
+<div class="shell">
+  <!-- @inject:topbar overview -->
+
+  <div class="page-head">
+    <div>
+      <h1>Overview</h1>
+      <div class="sub">All channels · Shopify, Google Ads, Meta Ads &amp; GA4 combined</div>
+    </div>
+    <div class="filters">
+      <div class="chip-row">
+        <button class="chip">Today</button>
+        <button class="chip">7D</button>
+        <button class="chip active">30D</button>
+        <button class="chip">90D</button>
+        <button class="chip">MTD</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid kpis" id="kpis"></div>
+
+  <div class="grid two">
+    <section class="card">
+      <div class="card-head">
+        <div><h2>Revenue vs ad spend</h2><div class="card-sub">Last 30 days, daily</div></div>
+        <div class="spacer"></div><div id="rev-legend"></div>
+      </div>
+      <div id="rev-chart"></div>
+    </section>
+    <section class="card">
+      <div class="card-head">
+        <div><h2>Ad spend by channel</h2><div class="card-sub">Weekly totals</div></div>
+        <div class="spacer"></div><div id="spend-legend"></div>
+      </div>
+      <div id="spend-chart"></div>
+    </section>
+  </div>
+
+  <section class="card">
+    <div class="card-head">
+      <div><h2>Top campaigns</h2><div class="card-sub">By revenue, all platforms</div></div>
+    </div>
+    <table class="data">
+      <thead><tr>
+        <th>Campaign</th><th>Platform</th><th class="num">Spend</th>
+        <th class="num">Conversions</th><th class="num">Revenue</th><th class="num">ROAS</th><th>Health</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="cell-key"><span class="swatch" style="background:var(--series-1)"></span>UD-US · PMax · Bestsellers</td><td>Google Ads</td><td class="num">$6,840</td><td class="num">214</td><td class="num">$34,120</td><td class="num">4.99</td><td><span class="pill good"><span class="dot"></span>Healthy</span></td></tr>
+        <tr><td class="cell-key"><span class="swatch" style="background:var(--series-2)"></span>Prospecting · Advantage+ Shopping</td><td>Meta Ads</td><td class="num">$5,210</td><td class="num">168</td><td class="num">$23,460</td><td class="num">4.50</td><td><span class="pill good"><span class="dot"></span>Healthy</span></td></tr>
+        <tr><td class="cell-key"><span class="swatch" style="background:var(--series-1)"></span>UD-CA · Search · Brand</td><td>Google Ads</td><td class="num">$1,930</td><td class="num">142</td><td class="num">$19,870</td><td class="num">10.30</td><td><span class="pill good"><span class="dot"></span>Healthy</span></td></tr>
+        <tr><td class="cell-key"><span class="swatch" style="background:var(--series-2)"></span>Retargeting · Catalog sales</td><td>Meta Ads</td><td class="num">$3,480</td><td class="num">121</td><td class="num">$15,240</td><td class="num">4.38</td><td><span class="pill warn"><span class="dot"></span>Fatiguing</span></td></tr>
+        <tr><td class="cell-key"><span class="swatch" style="background:var(--series-1)"></span>UD-US · Search · Zellige tile</td><td>Google Ads</td><td class="num">$2,610</td><td class="num">87</td><td class="num">$11,930</td><td class="num">4.57</td><td><span class="pill good"><span class="dot"></span>Healthy</span></td></tr>
+        <tr><td class="cell-key"><span class="swatch" style="background:var(--series-2)"></span>Prospecting · Reels · Spring lookbook</td><td>Meta Ads</td><td class="num">$2,940</td><td class="num">54</td><td class="num">$6,410</td><td class="num">2.18</td><td><span class="pill crit"><span class="dot"></span>Below target</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <div class="foot">Design preview with sample data — live Shopify, Google Ads, Meta Ads &amp; GA4 data is wired in Phase 2.</div>
+</div>
+
+<!-- @inject:charts -->
+<script>
+UD.tile(document.querySelector("#kpis").appendChild(document.createElement("div")),
+  { label: "Revenue", value: "$186.4K", delta: 12.4, vs: "prior 30d",
+    sparkValues: [128,132,129,138,141,139,148,152,150,161,168,186], color: "var(--series-1)" });
+UD.tile(document.querySelector("#kpis").appendChild(document.createElement("div")),
+  { label: "Orders", value: "1,284", delta: 8.1, vs: "prior 30d",
+    sparkValues: [92,95,91,99,104,101,108,112,109,117,121,128], color: "var(--series-1)" });
+UD.tile(document.querySelector("#kpis").appendChild(document.createElement("div")),
+  { label: "Blended ad spend", value: "$44.6K", delta: 4.3, vs: "prior 30d",
+    sparkValues: [38,39,37,40,41,40,42,41,43,43,44,44.6], color: "var(--series-1)" });
+UD.tile(document.querySelector("#kpis").appendChild(document.createElement("div")),
+  { label: "Blended ROAS", value: "4.18", delta: 7.7, vs: "prior 30d",
+    sparkValues: [3.4,3.5,3.5,3.6,3.7,3.6,3.8,3.9,3.8,4.0,4.1,4.18], color: "var(--series-1)" });
+UD.tile(document.querySelector("#kpis").appendChild(document.createElement("div")),
+  { label: "Sessions", value: "96.2K", delta: 9.8, vs: "prior 30d",
+    sparkValues: [68,70,69,74,76,75,79,82,81,86,90,96], color: "var(--series-1)" });
+
+const days = Array.from({length: 30}, (_, i) => (i + 17 <= 30 ? "Jun " + (i + 17) : "Jul " + (i - 13)));
+const revenue = [5.1,5.6,4.9,6.2,6.8,7.4,5.9,5.4,6.1,6.6,7.9,8.3,6.2,5.8,6.4,6.9,7.2,8.8,9.1,6.6,6.1,6.8,7.4,7.8,9.4,9.9,7.1,6.8,7.6,8.2].map(v => v * 1000);
+const spend = revenue.map((v, i) => v * 0.24 + (i % 5) * 90);
+const revSeries = [
+  { name: "Revenue", color: "var(--series-1)", values: revenue },
+  { name: "Ad spend", color: "var(--series-2)", values: spend },
+];
+UD.legend(document.getElementById("rev-legend"), revSeries);
+UD.lineChart(document.getElementById("rev-chart"),
+  { labels: days, series: revSeries, yFmt: v => UD.fmt.compact(v, true) });
+
+const spendSeries = [
+  { name: "Google Ads", color: "var(--series-1)", values: [6400, 6900, 7300, 7800] },
+  { name: "Meta Ads",   color: "var(--series-2)", values: [3600, 3900, 4200, 4500] },
+];
+UD.legend(document.getElementById("spend-legend"), spendSeries);
+UD.barChart(document.getElementById("spend-chart"),
+  { labels: ["Wk 25", "Wk 26", "Wk 27", "Wk 28"], series: spendSeries, stacked: true,
+    yFmt: v => UD.fmt.compact(v, true) });
+</script>
+</body>
+</html>

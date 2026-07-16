@@ -1,0 +1,117 @@
+<!-- @dsCard group="Pages" name="Google Ads" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Google Ads — Urban District Marketing</title>
+<!-- @inject:tokens -->
+</head>
+<body>
+<div class="shell">
+  <!-- @inject:topbar google-ads -->
+
+  <div class="page-head">
+    <div>
+      <h1>Google Ads</h1>
+      <div class="sub">Accounts: UD Canada · UD United States</div>
+    </div>
+    <div class="filters">
+      <select class="select" aria-label="Account">
+        <option>All accounts</option>
+        <option>UD — Canada</option>
+        <option>UD — United States</option>
+      </select>
+      <div class="chip-row">
+        <button class="chip">Today</button>
+        <button class="chip">7D</button>
+        <button class="chip active">30D</button>
+        <button class="chip">90D</button>
+        <button class="chip">MTD</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid kpis" id="kpis"></div>
+
+  <div class="grid halves">
+    <section class="card">
+      <div class="card-head">
+        <div><h2>Spend by day</h2><div class="card-sub">Both accounts, last 30 days</div></div>
+        <div class="spacer"></div><div id="spend-legend"></div>
+      </div>
+      <div id="spend-chart"></div>
+    </section>
+    <section class="card">
+      <div class="card-head">
+        <div><h2>Conversions by day</h2><div class="card-sub">Both accounts, last 30 days</div></div>
+        <div class="spacer"></div><div id="conv-legend"></div>
+      </div>
+      <div id="conv-chart"></div>
+    </section>
+  </div>
+
+  <section class="card">
+    <div class="card-head">
+      <div><h2>Campaigns</h2><div class="card-sub">Active, sorted by spend</div></div>
+    </div>
+    <table class="data">
+      <thead><tr>
+        <th>Campaign</th><th>Account</th><th class="num">Spend</th><th class="num">Clicks</th>
+        <th class="num">CTR</th><th class="num">Conv.</th><th class="num">CPA</th><th class="num">ROAS</th>
+      </tr></thead>
+      <tbody>
+        <tr><td>PMax · Bestsellers</td><td><span class="pill">US</span></td><td class="num">$6,840</td><td class="num">8,412</td><td class="num">3.1%</td><td class="num">214</td><td class="num">$31.96</td><td class="num">4.99</td></tr>
+        <tr><td>Search · Zellige tile</td><td><span class="pill">US</span></td><td class="num">$2,610</td><td class="num">3,186</td><td class="num">4.8%</td><td class="num">87</td><td class="num">$30.00</td><td class="num">4.57</td></tr>
+        <tr><td>Search · Brand</td><td><span class="pill">CA</span></td><td class="num">$1,930</td><td class="num">4,921</td><td class="num">7.9%</td><td class="num">142</td><td class="num">$13.59</td><td class="num">10.30</td></tr>
+        <tr><td>PMax · Seasonal — Patio</td><td><span class="pill">CA</span></td><td class="num">$1,720</td><td class="num">2,304</td><td class="num">2.7%</td><td class="num">49</td><td class="num">$35.10</td><td class="num">3.62</td></tr>
+        <tr><td>Search · Porcelain slab</td><td><span class="pill">US</span></td><td class="num">$1,480</td><td class="num">1,872</td><td class="num">3.9%</td><td class="num">38</td><td class="num">$38.95</td><td class="num">3.18</td></tr>
+        <tr><td>Display · Remarketing</td><td><span class="pill">CA</span></td><td class="num">$640</td><td class="num">2,988</td><td class="num">0.9%</td><td class="num">21</td><td class="num">$30.48</td><td class="num">2.84</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <div class="foot">Design preview with sample data — live Google Ads data (UD Canada 5242837388 · UD US 1824136649) is wired in Phase 2.</div>
+</div>
+
+<!-- @inject:charts -->
+<script>
+UD.tile(document.querySelector("#kpis").appendChild(document.createElement("div")),
+  { label: "Spend", value: "$28.4K", delta: 5.2, vs: "prior 30d",
+    sparkValues: [24,25,24,26,25,26,27,26,27,28,28,28.4], color: "var(--series-1)" });
+UD.tile(document.querySelector("#kpis").appendChild(document.createElement("div")),
+  { label: "Clicks", value: "31.2K", delta: 6.8, vs: "prior 30d",
+    sparkValues: [26,27,26,28,29,28,29,30,29,30,31,31.2], color: "var(--series-1)" });
+UD.tile(document.querySelector("#kpis").appendChild(document.createElement("div")),
+  { label: "Conversions", value: "892", delta: 9.4, vs: "prior 30d",
+    sparkValues: [71,73,72,76,78,77,80,82,81,85,87,89], color: "var(--series-1)" });
+UD.tile(document.querySelector("#kpis").appendChild(document.createElement("div")),
+  { label: "Cost / conversion", value: "$31.84", delta: -3.8, vs: "prior 30d",
+    sparkValues: [34.9,34.4,34.7,33.8,33.2,33.6,32.8,32.4,32.7,32.1,31.9,31.84], color: "var(--series-1)" });
+UD.tile(document.querySelector("#kpis").appendChild(document.createElement("div")),
+  { label: "Conv. value / cost", value: "4.62", delta: 4.1, vs: "prior 30d",
+    sparkValues: [4.2,4.3,4.2,4.4,4.4,4.3,4.5,4.5,4.4,4.6,4.6,4.62], color: "var(--series-1)" });
+
+const days = Array.from({length: 30}, (_, i) => (i + 17 <= 30 ? "Jun " + (i + 17) : "Jul " + (i - 13)));
+const spendCA = [312,336,301,348,371,394,329,318,342,361,398,412,344,331,352,368,381,428,441,357,338,361,388,401,452,468,377,362,394,418];
+const spendUS = spendCA.map((v, i) => v * 1.9 + (i % 4) * 22);
+const spendSeries = [
+  { name: "UD — US", color: "var(--series-1)", values: spendUS },
+  { name: "UD — CA", color: "var(--series-2)", values: spendCA },
+];
+UD.legend(document.getElementById("spend-legend"), spendSeries);
+UD.lineChart(document.getElementById("spend-chart"),
+  { labels: days, series: spendSeries, yFmt: v => UD.fmt.compact(v, true), height: 240 });
+
+const convUS = [18,21,17,22,24,26,20,19,22,23,27,28,21,20,23,24,25,30,31,22,21,23,26,27,32,33,24,23,26,28];
+const convCA = convUS.map((v, i) => Math.round(v * 0.55 + (i % 3)));
+const convSeries = [
+  { name: "UD — US", color: "var(--series-1)", values: convUS },
+  { name: "UD — CA", color: "var(--series-2)", values: convCA },
+];
+UD.legend(document.getElementById("conv-legend"), convSeries);
+UD.lineChart(document.getElementById("conv-chart"),
+  { labels: days, series: convSeries, yFmt: v => UD.fmt.num(v), height: 240 });
+</script>
+</body>
+</html>

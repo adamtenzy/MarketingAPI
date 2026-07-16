@@ -1,0 +1,119 @@
+<!-- @dsCard group="Pages" name="Shopify" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shopify — Urban District Marketing</title>
+<!-- @inject:tokens -->
+</head>
+<body>
+<div class="shell">
+  <!-- @inject:topbar shopify -->
+
+  <div class="page-head">
+    <div>
+      <h1>Shopify</h1>
+      <div class="sub">Store: Urban District</div>
+    </div>
+    <div class="filters">
+      <div class="chip-row">
+        <button class="chip">Today</button>
+        <button class="chip">7D</button>
+        <button class="chip active">30D</button>
+        <button class="chip">90D</button>
+        <button class="chip">MTD</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid kpis" id="kpis"></div>
+
+  <div class="grid two">
+    <section class="card">
+      <div class="card-head">
+        <div><h2>Revenue by day</h2><div class="card-sub">Gross sales, last 30 days</div></div>
+      </div>
+      <div id="rev-chart"></div>
+    </section>
+    <section class="card">
+      <div class="card-head">
+        <div><h2>Orders by week</h2><div class="card-sub">New vs returning customers</div></div>
+        <div class="spacer"></div><div id="orders-legend"></div>
+      </div>
+      <div id="orders-chart"></div>
+    </section>
+  </div>
+
+  <div class="grid halves">
+    <section class="card">
+      <div class="card-head">
+        <div><h2>Top products</h2><div class="card-sub">By revenue, last 30 days</div></div>
+      </div>
+      <div id="products-chart"></div>
+    </section>
+    <section class="card">
+      <div class="card-head">
+        <div><h2>Recent bestsellers</h2><div class="card-sub">Units &amp; revenue</div></div>
+      </div>
+      <table class="data">
+        <thead><tr><th>Product</th><th class="num">Units</th><th class="num">AOV</th><th class="num">Revenue</th></tr></thead>
+        <tbody>
+          <tr><td>Calacatta Gold Porcelain 12×24</td><td class="num">312</td><td class="num">$168</td><td class="num">$52,416</td></tr>
+          <tr><td>Zellige Ceramic 4×4 — Sage</td><td class="num">288</td><td class="num">$96</td><td class="num">$27,648</td></tr>
+          <tr><td>Terrazzo Hex Mosaic — Blush</td><td class="num">176</td><td class="num">$124</td><td class="num">$21,824</td></tr>
+          <tr><td>Tumbled Travertine 16×16</td><td class="num">134</td><td class="num">$142</td><td class="num">$19,028</td></tr>
+          <tr><td>Matte Subway 3×12 — Charcoal</td><td class="num">241</td><td class="num">$74</td><td class="num">$17,834</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <div class="foot">Design preview with sample data — live Shopify data (orders, products, customers) is wired in Phase 2.</div>
+</div>
+
+<!-- @inject:charts -->
+<script>
+UD.tile(document.querySelector("#kpis").appendChild(document.createElement("div")),
+  { label: "Gross revenue", value: "$186.4K", delta: 12.4, vs: "prior 30d",
+    sparkValues: [128,132,129,138,141,139,148,152,150,161,168,186], color: "var(--series-1)" });
+UD.tile(document.querySelector("#kpis").appendChild(document.createElement("div")),
+  { label: "Orders", value: "1,284", delta: 8.1, vs: "prior 30d",
+    sparkValues: [92,95,91,99,104,101,108,112,109,117,121,128], color: "var(--series-1)" });
+UD.tile(document.querySelector("#kpis").appendChild(document.createElement("div")),
+  { label: "Average order value", value: "$145.20", delta: 3.9, vs: "prior 30d",
+    sparkValues: [131,133,132,135,136,135,138,139,138,141,143,145], color: "var(--series-1)" });
+UD.tile(document.querySelector("#kpis").appendChild(document.createElement("div")),
+  { label: "Conversion rate", value: "1.93%", delta: 2.2, vs: "prior 30d",
+    sparkValues: [1.71,1.74,1.70,1.78,1.80,1.77,1.83,1.86,1.84,1.89,1.91,1.93], color: "var(--series-1)" });
+UD.tile(document.querySelector("#kpis").appendChild(document.createElement("div")),
+  { label: "Returning customers", value: "28.4%", delta: -1.3, vs: "prior 30d",
+    sparkValues: [30.1,29.8,30.0,29.4,29.6,29.2,28.9,29.1,28.7,28.6,28.5,28.4], color: "var(--series-1)" });
+
+const days = Array.from({length: 30}, (_, i) => (i + 17 <= 30 ? "Jun " + (i + 17) : "Jul " + (i - 13)));
+const revenue = [5.1,5.6,4.9,6.2,6.8,7.4,5.9,5.4,6.1,6.6,7.9,8.3,6.2,5.8,6.4,6.9,7.2,8.8,9.1,6.6,6.1,6.8,7.4,7.8,9.4,9.9,7.1,6.8,7.6,8.2].map(v => v * 1000);
+UD.lineChart(document.getElementById("rev-chart"),
+  { labels: days, series: [{ name: "Revenue", color: "var(--series-1)", values: revenue }],
+    yFmt: v => UD.fmt.compact(v, true) });
+
+const orderSeries = [
+  { name: "New",       color: "var(--series-1)", values: [212, 224, 238, 246] },
+  { name: "Returning", color: "var(--series-2)", values: [84, 88, 94, 98] },
+];
+UD.legend(document.getElementById("orders-legend"), orderSeries);
+UD.barChart(document.getElementById("orders-chart"),
+  { labels: ["Wk 25", "Wk 26", "Wk 27", "Wk 28"], series: orderSeries, stacked: true });
+
+UD.hBars(document.getElementById("products-chart"), {
+  vFmt: v => UD.fmt.compact(v, true),
+  rows: [
+    { name: "Calacatta Gold 12×24",   value: 52416, color: "var(--series-1)" },
+    { name: "Zellige 4×4 — Sage",     value: 27648, color: "var(--series-1)" },
+    { name: "Terrazzo Hex — Blush",   value: 21824, color: "var(--series-1)" },
+    { name: "Travertine 16×16",       value: 19028, color: "var(--series-1)" },
+    { name: "Subway 3×12 — Charcoal", value: 17834, color: "var(--series-1)" },
+  ],
+});
+</script>
+</body>
+</html>
