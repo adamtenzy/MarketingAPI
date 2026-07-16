@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { auth, devLoginEnabled } from "@/auth";
 import { SignInButton } from "@/components/auth/SignInButton";
+import { DevSignIn } from "@/components/auth/DevSignIn";
 
 export default async function LoginPage({
   searchParams,
@@ -20,6 +21,7 @@ export default async function LoginPage({
         <h1>Sign in</h1>
         <p>Use your Urban District Google account to access the marketing dashboard.</p>
         <SignInButton />
+        {devLoginEnabled ? <DevSignIn /> : null}
         {error ? (
           <div className="err">
             {error === "AccessDenied"
